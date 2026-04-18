@@ -6,6 +6,7 @@ from pathlib import Path
 import geopandas as gpd
 import requests
 
+# URL copied from https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d
 URL = "https://data.geo.admin.ch/ch.swisstopo.swissboundaries3d/swissboundaries3d_2026-01/swissboundaries3d_2026-01_2056_5728.gpkg.zip"
 LAYER = "tlm_kantonsgebiet"
 
