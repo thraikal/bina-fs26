@@ -1,2 +1,3 @@
 venv/*
 dataflow*
+data/raw
