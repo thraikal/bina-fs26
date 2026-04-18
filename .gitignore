@@ -1,5 +1,8 @@
 .DS_STORE
+__pycache__/
+*.pyc
 venv/*
 dataflow*
 data/raw
 data/interim
+data/dashboard

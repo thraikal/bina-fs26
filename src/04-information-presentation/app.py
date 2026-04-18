@@ -1,14 +1,15 @@
 from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
 import pandas as pd
-import json
+import sys
 from pathlib import Path
 import plotly.graph_objects as go
 
-DATA_DIR = Path(__file__).parents[2] / "data"
+ROOT = Path(__file__).parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+from utils.fetch_cantons import load_cantons_geojson
 
-with open(DATA_DIR / "cantons.geojson") as f:
-    cantons = json.load(f)
+cantons = load_cantons_geojson(ROOT / "data/dashboard")
 
 df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
 
