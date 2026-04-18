@@ -1,3 +1,5 @@
+.DS_STORE
 venv/*
 dataflow*
 data/raw
+data/interim
