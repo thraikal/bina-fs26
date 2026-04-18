@@ -6,7 +6,7 @@ Inwieweit lassen sich Gesundheitskosten in der Schweiz durch demografische (insb
 
 1. Wie entwickeln sich die Gesundheitskosten über die Zeit?
 2. Wie unterscheiden sich Kosten nach Alter und Region?
-3. Welchen Anteil haben ältere Altersgruppen (65+) an den Gesamtkosten und wie verändert sich dieser über die Zeit?
+3. Welchen Anteil haben ältere Altersgruppen (66+) an den Gesamtkosten und wie verändert sich dieser über die Zeit?
 4. Lassen sich auf Basis von Altersstruktur und Kosten klare Segmente (Cluster) identifizieren?
 5. Welche Faktoren erklären die Unterschiede zwischen diesen Segmenten und welche sollten priorisiert werden?
 
@@ -26,6 +26,16 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+
+## Dashboard
+
+1. Run:
+
+```bash
+python src/app.py
+```
+
+2. Open `http://127.0.0.1:8050/` in your browser.
 
 ## Sources
 
