@@ -17,6 +17,31 @@ app = Dash()
 
 app.title = "Gesundheitskosten, Alterung & Prämienbelastung"
 
+# override the default index.html template to set body margin to 0
+app.index_string = """
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        {%favicon%}
+        {%css%}
+        <style>
+            body {
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+"""
+
 app.layout = [
     html.H1('From Data to Decisions', style={'textAlign': 'center'}),
     dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
