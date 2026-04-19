@@ -15,6 +15,8 @@ df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapmi
 
 app = Dash()
 
+app.title = "Gesundheitskosten, Alterung & Prämienbelastung"
+
 app.layout = [
     html.H1('From Data to Decisions', style={'textAlign': 'center'}),
     dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
