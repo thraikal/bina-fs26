@@ -9,6 +9,17 @@ ROOT = Path(__file__).parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from utils.fetch_cantons import load_cantons_geojson
 
+TAB_STYLE = {
+    "borderTop": "none",
+    "userSelect": "none",
+}
+
+TAB_SELECTED = {
+    **TAB_STYLE,
+    "borderBottom": "3px solid #d8232a",
+    "color": "#d8232a",
+}
+
 cantons = load_cantons_geojson(ROOT / "data/dashboard")
 
 df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
@@ -29,6 +40,9 @@ app.index_string = """
             body {
                 margin: 0;
                 font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            }
+            .tab:hover * {
+                color: #d8232a;
             }
         </style>
     </head>
@@ -56,16 +70,16 @@ app.layout = [
         }
     ),
     dcc.Tabs(id="tabs", value="overview", children=[
-        dcc.Tab(label="Übersicht", value="overview", children=[
+        dcc.Tab(label="Übersicht", value="overview", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
             html.H1('From Data to Decisions', style={'textAlign': 'center'}),
             dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
             dcc.Graph(id='graph-content'),
             dcc.Graph(id='cantons-map')
         ]),
-        dcc.Tab(label="1. Kosten pro Kopf", id="sq1", children=[]),
-        dcc.Tab(label="2. Prämien & Kosten", id="sq2", children=[]),
-        dcc.Tab(label="3. Alterung & Kosten", id="sq3", children=[]),
-        dcc.Tab(label="4. Segmente & Prognose", id="sq4", children=[])
+        dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+        dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+        dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+        dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
     ])
 ]
 
