@@ -55,10 +55,18 @@ app.layout = [
             "alignItems": "center",
         }
     ),
-    html.H1('From Data to Decisions', style={'textAlign': 'center'}),
-    dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
-    dcc.Graph(id='graph-content'),
-    dcc.Graph(id='cantons-map')
+    dcc.Tabs(id="tabs", value="overview", children=[
+        dcc.Tab(label="Übersicht", value="overview", children=[
+            html.H1('From Data to Decisions', style={'textAlign': 'center'}),
+            dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
+            dcc.Graph(id='graph-content'),
+            dcc.Graph(id='cantons-map')
+        ]),
+        dcc.Tab(label="1. Kosten pro Kopf", id="sq1", children=[]),
+        dcc.Tab(label="2. Prämien & Kosten", id="sq2", children=[]),
+        dcc.Tab(label="3. Alterung & Kosten", id="sq3", children=[]),
+        dcc.Tab(label="4. Segmente & Prognose", id="sq4", children=[])
+    ])
 ]
 
 @callback(
