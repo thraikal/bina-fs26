@@ -28,6 +28,7 @@ app.index_string = """
         <style>
             body {
                 margin: 0;
+                font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
             }
         </style>
     </head>
@@ -43,6 +44,17 @@ app.index_string = """
 """
 
 app.layout = [
+    html.Div(
+        'Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz',
+        style={
+            "display": "flex",
+            "height": "46px",
+            "color": "#ffffff",
+            "backgroundColor": "#2f4356",
+            "paddingLeft": "40px",
+            "alignItems": "center",
+        }
+    ),
     html.H1('From Data to Decisions', style={'textAlign': 'center'}),
     dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
     dcc.Graph(id='graph-content'),
