@@ -1,14 +1,14 @@
-# Bina: Gruppenarbeit
+# BINA Case Study: Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz
 
-## Fragen
+## Einleitung
+Diese Anwendung zeigt die Entwicklung der Gesundheitskosten in der Schweiz über die Zeit und analysiert die Auswirkungen auf die Alterung und Prämienbelastung.
 
-Inwieweit lassen sich Gesundheitskosten in der Schweiz durch demografische (insbesondere Altersstruktur) und regionale Faktoren erklären und welche Segmente verursachen die grösste Systembelastung?
-
-1. Wie entwickeln sich die Gesundheitskosten über die Zeit?
-2. Wie unterscheiden sich Kosten nach Alter und Region?
-3. Welchen Anteil haben ältere Altersgruppen (66+) an den Gesamtkosten und wie verändert sich dieser über die Zeit?
-4. Lassen sich auf Basis von Altersstruktur und Kosten klare Segmente (Cluster) identifizieren?
-5. Welche Faktoren erklären die Unterschiede zwischen diesen Segmenten und welche sollten priorisiert werden?
+## Fragestellung
+Welche Kantone stehen aufgrund von Gesundheitskosten, Alterung und Prämienbelastung unter dem grössten Druck, und welche Entwicklung ist bis 2030 zu erwarten?
+1. Welche Kantone haben die höchsten Gesundheitskosten pro Kopf, und wie hat sich dieser Druck seit 2011 entwickelt?
+2. In welchen Kantonen passen Prämienniveau und Gesundheitskostenbelastung zusammen und wo gibt es Auffälligkeiten?
+3. Wie stark hängt die kantonale Kostenbelastung mit dem Anteil älterer Bevölkerung zusammen?
+4. Welche Kantone bilden ähnliche Belastungssegmente, und wie entwickeln sich diese bis 2030?
 
 Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Massnahmen im Gesundheitssystem abzuleiten.
 
@@ -27,7 +27,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Dashboard
+## Dashboard starten
 
 1. Run:
 
@@ -39,6 +39,5 @@ python src/app.py
 
 ## Sources
 
-[Gesundheitskosten](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS)
-
-[Bevölkerungsdaten](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html)
+- [Gesundheitskosten (bfs.admin.ch)](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS)
+- [Bevölkerungsdaten (bfs.admin.ch)](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html)
