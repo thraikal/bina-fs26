@@ -5,9 +5,19 @@ import sys
 from pathlib import Path
 import plotly.graph_objects as go
 
+
+# ---------------------------------------------------------
+# Paths
+# ---------------------------------------------------------
+
 ROOT = Path(__file__).parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from utils.fetch_cantons import load_cantons_geojson
+
+
+# ---------------------------------------------------------
+# Styling
+# ---------------------------------------------------------
 
 TAB_STYLE = {
     "borderTop": "none",
@@ -20,9 +30,19 @@ TAB_SELECTED = {
     "color": "#d8232a",
 }
 
+
+# ---------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------
+
 cantons = load_cantons_geojson(ROOT / "data/dashboard")
 
 df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
+
+
+# ---------------------------------------------------------
+# App
+# ---------------------------------------------------------
 
 app = Dash()
 
@@ -88,6 +108,11 @@ app.layout = [
         ]),
     ], style={"max-width": "1500px", "margin": "auto"})
 ]
+
+
+# ---------------------------------------------------------
+# Callbacks
+# ---------------------------------------------------------
 
 @callback(
     Output('graph-content', 'figure'),
