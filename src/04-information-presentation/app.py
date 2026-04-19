@@ -59,28 +59,34 @@ app.index_string = """
 
 app.layout = [
     html.Div(
-        'Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz',
+        html.Div(
+            html.Div('Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz'),
+            style={"width": "1500px", "max-width": "1500px", "margin": "auto", "paddingLeft": "40px",}
+        ),
         style={
             "display": "flex",
             "height": "46px",
             "color": "#ffffff",
             "backgroundColor": "#2f4356",
-            "paddingLeft": "40px",
             "alignItems": "center",
         }
     ),
-    dcc.Tabs(id="tabs", value="overview", children=[
-        dcc.Tab(label="Übersicht", value="overview", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
-            html.H1('From Data to Decisions', style={'textAlign': 'center'}),
-            dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
-            dcc.Graph(id='graph-content'),
-            dcc.Graph(id='cantons-map')
+    html.Div([
+        dcc.Tabs(id="tabs", value="overview", children=[
+            dcc.Tab(label="Übersicht", value="overview", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
+                html.Div(children=[
+                    html.H1('From Data to Decisions', style={'textAlign': 'center'}),
+                    dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
+                    dcc.Graph(id='graph-content'),
+                    dcc.Graph(id='cantons-map')
+                ], style={"max-width": "1000px", "margin": "auto"})
+            ]),
+            dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+            dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+            dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+            dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
         ]),
-        dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
-        dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
-        dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
-        dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
-    ])
+    ], style={"max-width": "1500px", "margin": "auto"})
 ]
 
 @callback(
