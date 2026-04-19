@@ -106,7 +106,20 @@ app.layout = [
             dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
             dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
         ]),
-    ], style={"max-width": "1500px", "margin": "auto"})
+    ], style={"max-width": "1500px", "margin": "auto", "minHeight": "calc(100vh - 92px)"}),
+    html.Div(
+        html.Div(
+            html.Div('Case Study · Business Intelligence & Analytics · MSc Wirtschaftsinformatik · 2026'),
+            style={"width": "1500px", "max-width": "1500px", "margin": "auto", "paddingLeft": "40px",}
+        ),
+        style={
+            "display": "flex",
+            "height": "46px",
+            "color": "#ffffff",
+            "backgroundColor": "#2f4356",
+            "alignItems": "center",
+        }
+    ),
 ]
 
 
