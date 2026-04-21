@@ -232,14 +232,15 @@ app.layout = [
                         "padding": "16px 20px", "marginBottom": "16px",
                     }),
                     html.Div([
+                        dcc.Store(id='sq1-active-canton'),
                         html.Div([
-                            dcc.Graph(id='sq1-map', config={"displayModeBar": False}),
+                            dcc.Graph(id='sq1-map', config={"displayModeBar": False}, clear_on_unhover=True),
                         ], style={
                             "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                             "padding": "12px", "flex": "1",
                         }),
                         html.Div([
-                            dcc.Graph(id='sq1-trend', config={"displayModeBar": False}),
+                            dcc.Graph(id='sq1-trend', config={"displayModeBar": False}, clear_on_unhover=True),
                         ], style={
                             "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                             "padding": "12px", "flex": "1",
@@ -330,34 +331,44 @@ def sq1_map(year):
     return fig
 
 
+_geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
+
+
+@callback(
+    Output('sq1-active-canton', 'data'),
+    Input('sq1-map', 'hoverData'),
+    Input('sq1-map', 'clickData'),
+    Input('sq1-trend', 'hoverData'),
+)
+def sq1_active_canton(map_hover, map_click, trend_hover):
+    # click locks the selection permanently
+    if map_click and map_click['points']:
+        geo = map_click['points'][0]['location']
+        return _geo_to_canton.get(geo)
+    # hovering the trend line is more direct than hovering the map
+    if trend_hover and trend_hover['points']:
+        return trend_hover['points'][0]['customdata'][0]
+    if map_hover and map_hover['points']:
+        geo = map_hover['points'][0]['location']
+        return _geo_to_canton.get(geo)
+    return None
+
+
 @callback(
     Output('sq1-trend', 'figure'),
     Input('sq1-year-slider', 'value'),
-    Input('sq1-map', 'hoverData'),
-    Input('sq1-map', 'clickData'),
+    Input('sq1-active-canton', 'data'),
 )
-def sq1_trend(selected_year, hover_data, click_data):
-    # click locks a selection; hover overrides only when nothing is clicked
-    active_data = click_data or hover_data
-    selected_geo = None
-    if active_data and active_data['points']:
-        selected_geo = active_data['points'][0]['location']
-
-    # map geo_name → canton label used by the line traces
-    geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
-
+def sq1_trend(selected_year, highlighted):
     fig = px.line(
         df_per_person.sort_values('year'),
         x='year',
         y='cost_per_capita',
         color='canton',
         markers=True,
+        custom_data=['canton'],
         labels={'year': 'Jahr', 'cost_per_capita': 'CHF pro Kopf', 'canton': 'Kanton'},
     )
-
-    highlighted = None
-    if selected_geo and selected_geo in geo_to_canton.index:
-        highlighted = geo_to_canton[selected_geo]
 
     for trace in fig.data:
         if highlighted:
