@@ -16,7 +16,7 @@ def load_cantons_geojson(data_dir: Path) -> dict:
     if not cache.exists():
         gpkg_bytes = _unzip_gpkg(_download_zip())
         _convert_to_geojson(gpkg_bytes, cache)
-    with open(cache) as f:
+    with open(cache, encoding='utf-8') as f:
         return json.load(f)
 
 
