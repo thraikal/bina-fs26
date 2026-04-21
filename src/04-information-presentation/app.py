@@ -87,7 +87,22 @@ df_per_person = (
     )
 )
 
-SQ1_YEARS = sorted(df_per_person['year'].unique())
+YEARS = sorted(df_per_person['year'].unique())
+
+
+# ---------------------------------------------------------
+# UI components
+# ---------------------------------------------------------
+def year_slider(slider_id: str, years: list[int]) -> dcc.Slider:
+    years = [int(y) for y in years]
+    marks = {y: str(y) for y in years if y % 5 == 0 or y == years[0] or y == years[-1]}
+    return dcc.Slider(
+        id=slider_id,
+        min=years[0], max=years[-1], step=1,
+        value=years[-1],
+        marks=marks,
+        tooltip={"placement": "bottom", "always_visible": False},
+    )
 
 
 # ---------------------------------------------------------
@@ -113,6 +128,23 @@ app.index_string = """
             }
             .tab:hover * {
                 color: #d8232a;
+            }
+            .year-step-btn {
+                background: transparent;
+                border: 1.5px solid #d8232a;
+                color: #d8232a;
+                font-size: 16px;
+                font-weight: 600;
+                padding: 4px 14px;
+                cursor: pointer;
+                border-radius: 4px;
+                line-height: 1.4;
+                letter-spacing: 0.02em;
+                transition: background 0.15s, color 0.15s;
+            }
+            .year-step-btn:hover {
+                background: #d8232a;
+                color: #ffffff;
             }
         </style>
     </head>
@@ -155,15 +187,11 @@ app.layout = [
                 html.Div([
                     html.H1("Gesundheitskosten pro Kopf nach Kanton", style={'textAlign': 'left'}),
                     html.Div([
-                        html.Label("Jahr:", style={'marginRight': '10px', 'fontWeight': 'bold'}),
-                        dcc.Dropdown(
-                            id='sq1-year',
-                            options=[{'label': y, 'value': y} for y in SQ1_YEARS],
-                            value=2022,
-                            clearable=False,
-                            style={'width': '120px', 'display': 'inline-block'},
-                        ),
-                    ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '10px'}),
+                        html.Label("Jahr:", style={'marginRight': '12px', 'fontWeight': 'bold', 'whiteSpace': 'nowrap'}),
+                        html.Div(year_slider("sq1-year-slider", YEARS), style={'flex': '1'}),
+                        html.Button("‹", id='sq1-year-prev', n_clicks=0, className='year-step-btn'),
+                        html.Button("›", id='sq1-year-next', n_clicks=0, className='year-step-btn'),
+                    ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '20px', 'gap': '8px'}),
                     dcc.Graph(id='sq1-map'),
                 ], style={'maxWidth': '1200px', 'margin': 'auto', 'padding': '20px'}),
             ]),
@@ -214,7 +242,22 @@ def render_map(_):
     fig.update_geos(fitbounds='locations', visible=False)
     return fig
 
-@callback(Output('sq1-map', 'figure'), Input('sq1-year', 'value'))
+@callback(
+    Output('sq1-year-slider', 'value'),
+    Input('sq1-year-prev', 'n_clicks'),
+    Input('sq1-year-next', 'n_clicks'),
+    Input('sq1-year-slider', 'value'),
+)
+def sq1_step_year(_prev, _next, current_year):
+    from dash import ctx
+    if ctx.triggered_id == 'sq1-year-prev':
+        return max(YEARS[0], current_year - 1)
+    if ctx.triggered_id == 'sq1-year-next':
+        return min(YEARS[-1], current_year + 1)
+    return current_year
+
+
+@callback(Output('sq1-map', 'figure'), Input('sq1-year-slider', 'value'))
 def sq1_map(year):
     dff = df_per_person[df_per_person['year'] == year]
     fig = px.choropleth(
