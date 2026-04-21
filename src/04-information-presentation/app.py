@@ -232,17 +232,19 @@ app.layout = [
                         "padding": "16px 20px", "marginBottom": "16px",
                     }),
                     html.Div([
-                        dcc.Graph(id='sq1-map', config={"displayModeBar": False}),
-                    ], style={
-                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
-                        "padding": "20px", "marginBottom": "16px",
-                    }),
-                    html.Div([
-                        dcc.Graph(id='sq1-trend', config={"displayModeBar": False}),
-                    ], style={
-                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
-                        "padding": "20px",
-                    }),
+                        html.Div([
+                            dcc.Graph(id='sq1-map', config={"displayModeBar": False}),
+                        ], style={
+                            "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                            "padding": "12px", "flex": "1",
+                        }),
+                        html.Div([
+                            dcc.Graph(id='sq1-trend', config={"modeBarButtons": [["toImage"]], "displaylogo": False}),
+                        ], style={
+                            "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                            "padding": "12px", "flex": "1",
+                        }),
+                    ], style={"display": "flex", "gap": "16px"}),
                 ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
             ]),
             dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
@@ -323,12 +325,27 @@ def sq1_map(year):
         title=f'Gesundheitskosten pro Kopf {year}',
     )
     fig.update_geos(fitbounds='locations', visible=False)
-    fig.update_layout(margin={'r': 0, 't': 40, 'l': 0, 'b': 0}, height=480)
+    fig.update_coloraxes(colorbar=dict(thickness=10, len=0.5, title_side='right'))
+    fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), height=480)
     return fig
 
 
-@callback(Output('sq1-trend', 'figure'), Input('sq1-year-slider', 'value'))
-def sq1_trend(selected_year):
+@callback(
+    Output('sq1-trend', 'figure'),
+    Input('sq1-year-slider', 'value'),
+    Input('sq1-map', 'hoverData'),
+    Input('sq1-map', 'clickData'),
+)
+def sq1_trend(selected_year, hover_data, click_data):
+    # click locks a selection; hover overrides only when nothing is clicked
+    active_data = click_data or hover_data
+    selected_geo = None
+    if active_data and active_data['points']:
+        selected_geo = active_data['points'][0]['location']
+
+    # map geo_name → canton label used by the line traces
+    geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
+
     fig = px.line(
         df_per_person.sort_values('year'),
         x='year',
@@ -336,10 +353,33 @@ def sq1_trend(selected_year):
         color='canton',
         markers=True,
         labels={'year': 'Jahr', 'cost_per_capita': 'CHF pro Kopf', 'canton': 'Kanton'},
-        title='Entwicklung der Gesundheitskosten pro Kopf von 2011 bis 2024',
     )
+
+    highlighted = None
+    if selected_geo and selected_geo in geo_to_canton.index:
+        highlighted = geo_to_canton[selected_geo]
+
+    for trace in fig.data:
+        if highlighted:
+            if trace.name == highlighted:
+                trace.line.width = 3
+                trace.opacity = 1.0
+                trace.showlegend = True
+            else:
+                trace.line.width = 1
+                trace.opacity = 0.15
+                trace.showlegend = False
+        else:
+            trace.showlegend = False
+
     fig.add_vline(x=selected_year, line_dash='dot', line_color='gray', opacity=0.6)
-    fig.update_layout(height=500, legend={'orientation': 'v', 'x': 1.01})
+    fig.update_layout(
+        height=480,
+        margin=dict(t=8, b=0, r=8),
+        xaxis=dict(range=[YEARS[0] - 0.3, YEARS[-1] + 0.3]),
+        legend=dict(orientation='h', x=0.01, y=0.99, xanchor='left', yanchor='top',
+                    bgcolor='rgba(255,255,255,0.7)'),
+    )
     return fig
 
 
