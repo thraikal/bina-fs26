@@ -300,13 +300,18 @@ def render_map(_):
     Input('sq1-year-prev', 'n_clicks'),
     Input('sq1-year-next', 'n_clicks'),
     Input('sq1-year-slider', 'value'),
+    Input('sq1-trend', 'clickData'),
 )
-def sq1_step_year(_prev, _next, current_year):
+def sq1_step_year(_prev, _next, current_year, trend_click):
     from dash import ctx
     if ctx.triggered_id == 'sq1-year-prev':
         return max(YEARS[0], current_year - 1)
     if ctx.triggered_id == 'sq1-year-next':
         return min(YEARS[-1], current_year + 1)
+    if ctx.triggered_id == 'sq1-trend' and trend_click and trend_click['points']:
+        clicked_year = int(trend_click['points'][0]['x'])
+        if clicked_year in YEARS:
+            return clicked_year
     return current_year
 
 
