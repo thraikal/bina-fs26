@@ -328,11 +328,21 @@ def sq1_map(year):
         hover_data={'cost_per_capita': ':,.0f', 'geo_name': False},
         color_continuous_scale='Reds',
         labels={'cost_per_capita': 'CHF pro Kopf'},
-        title=f'Gesundheitskosten pro Kopf {year}',
     )
     fig.update_geos(fitbounds='locations', visible=False)
-    fig.update_coloraxes(colorbar=dict(thickness=10, len=0.5, title_side='right'))
-    fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), height=480)
+    fig.update_coloraxes(colorbar=dict(
+        orientation='h',
+        x=0.5, y=1.01,
+        xanchor='center', yanchor='bottom',
+        thickness=10, len=0.7,
+        title_text='CHF pro Kopf',
+        title_side='top',
+    ))
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=45, b=0),
+        height=480,
+        font=dict(size=12, color='#888'),
+    )
     return fig
 
 
@@ -391,9 +401,10 @@ def sq1_trend(selected_year, highlighted):
     fig.add_vline(x=selected_year, line_dash='dot', line_color='gray', opacity=0.6)
     fig.update_layout(
         height=480,
-        margin=dict(t=8, b=0, r=8),
+        margin=dict(l=55, t=8, b=0, r=8),
         paper_bgcolor='white',
         plot_bgcolor='white',
+        font=dict(size=12, color='#888'),
         xaxis=dict(range=[YEARS[0] - 0.3, YEARS[-1] + 0.3]),
         legend=dict(orientation='h', x=0.01, y=0.99, xanchor='left', yanchor='top',
                     bgcolor='rgba(255,255,255,0.7)'),
