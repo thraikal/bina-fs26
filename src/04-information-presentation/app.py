@@ -39,6 +39,56 @@ cantons = load_cantons_geojson(ROOT / "data/dashboard")
 
 df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
 
+# ==============================
+# SQ1: Health cost per person
+# ==============================
+
+_POP_TO_COSTS = {
+    'Schweiz': 'Total',
+    'Zürich': 'Zurich',
+    'Bern / Berne': 'Bern',
+    'Luzern': 'Lucerne',
+    'Fribourg / Freiburg': 'Fribourg',
+    'Genève': 'Geneva',
+    'Graubünden / Grigioni / Grischun': 'Graubünden',
+    'Valais / Wallis': 'Valais',
+}
+
+_COSTS_TO_GEO = {
+    'Zurich': 'Zürich',
+    'Lucerne': 'Luzern',
+    'Geneva': 'Genève',
+}
+
+_df_costs_raw = pd.read_csv(ROOT / "data/processed/gesundheitskosten.csv")
+_df_pop_raw = pd.read_csv(ROOT / "data/interim/bevoelkerung_2011_2026.csv", encoding='utf-8-sig')
+
+_df_costs_canton = (
+    _df_costs_raw[
+        (_df_costs_raw['AGE'] == '_T') & (_df_costs_raw['CANTON'] != '_T')
+    ][['TIME_PERIOD', 'Swiss cantons', 'costs_chf']]
+    .rename(columns={'TIME_PERIOD': 'year', 'Swiss cantons': 'canton'})
+)
+
+_df_pop_canton = (
+    _df_pop_raw[_df_pop_raw['Alter'] == 'Alter - Total']
+    [['Jahr', 'Kanton', 'Bestand am 31. Dezember']]
+    .rename(columns={'Jahr': 'year', 'Kanton': 'canton', 'Bestand am 31. Dezember': 'population'})
+    .copy()
+)
+_df_pop_canton['canton'] = _df_pop_canton['canton'].replace(_POP_TO_COSTS)
+_df_pop_canton = _df_pop_canton[_df_pop_canton['canton'] != 'Schweiz']
+
+df_per_person = (
+    _df_costs_canton.merge(_df_pop_canton, on=['year', 'canton'])
+    .assign(
+        cost_per_capita=lambda d: d['costs_chf'] / d['population'],
+        geo_name=lambda d: d['canton'].replace(_COSTS_TO_GEO),
+    )
+)
+
+SQ1_YEARS = sorted(df_per_person['year'].unique())
+
 
 # ---------------------------------------------------------
 # App
@@ -101,7 +151,22 @@ app.layout = [
                     dcc.Graph(id='cantons-map')
                 ], style={"max-width": "1000px", "margin": "auto"})
             ]),
-            dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+            dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
+                html.Div([
+                    html.H1("Gesundheitskosten pro Kopf nach Kanton", style={'textAlign': 'left'}),
+                    html.Div([
+                        html.Label("Jahr:", style={'marginRight': '10px', 'fontWeight': 'bold'}),
+                        dcc.Dropdown(
+                            id='sq1-year',
+                            options=[{'label': y, 'value': y} for y in SQ1_YEARS],
+                            value=2022,
+                            clearable=False,
+                            style={'width': '120px', 'display': 'inline-block'},
+                        ),
+                    ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '10px'}),
+                    dcc.Graph(id='sq1-map'),
+                ], style={'maxWidth': '1200px', 'margin': 'auto', 'padding': '20px'}),
+            ]),
             dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
             dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
             dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
@@ -148,6 +213,26 @@ def render_map(_):
     ))
     fig.update_geos(fitbounds='locations', visible=False)
     return fig
+
+@callback(Output('sq1-map', 'figure'), Input('sq1-year', 'value'))
+def sq1_map(year):
+    dff = df_per_person[df_per_person['year'] == year]
+    fig = px.choropleth(
+        dff,
+        geojson=cantons,
+        locations='geo_name',
+        featureidkey='properties.name',
+        color='cost_per_capita',
+        hover_name='canton',
+        hover_data={'cost_per_capita': ':,.0f', 'geo_name': False},
+        color_continuous_scale='Reds',
+        labels={'cost_per_capita': 'CHF pro Kopf'},
+        title=f'Gesundheitskosten pro Kopf {year}',
+    )
+    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_layout(margin={'r': 0, 't': 40, 'l': 0, 'b': 0}, height=480)
+    return fig
+
 
 if __name__ == '__main__':
     app.run(debug=True)
