@@ -376,6 +376,8 @@ def sq1_trend(selected_year, hover_data, click_data):
     fig.update_layout(
         height=480,
         margin=dict(t=8, b=0, r=8),
+        paper_bgcolor='white',
+        plot_bgcolor='white',
         xaxis=dict(range=[YEARS[0] - 0.3, YEARS[-1] + 0.3]),
         legend=dict(orientation='h', x=0.01, y=0.99, xanchor='left', yanchor='top',
                     bgcolor='rgba(255,255,255,0.7)'),
