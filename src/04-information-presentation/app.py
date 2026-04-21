@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input, no_update
 import plotly.express as px
 import pandas as pd
 import sys
@@ -92,6 +92,39 @@ df_per_person = (
 )
 
 YEARS = sorted(df_per_person['year'].unique())
+
+
+def _build_sq1_map(year: int):
+    dff = df_per_person[df_per_person['year'] == year]
+    fig = px.choropleth(
+        dff,
+        geojson=cantons,
+        locations='geo_name',
+        featureidkey='properties.name',
+        color='cost_per_capita',
+        hover_name='canton',
+        hover_data={'cost_per_capita': ':,.0f', 'geo_name': False},
+        color_continuous_scale='Reds',
+        labels={'cost_per_capita': 'CHF pro Kopf'},
+    )
+    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_coloraxes(colorbar=dict(
+        orientation='h',
+        x=0.5, y=1.01,
+        xanchor='center', yanchor='bottom',
+        thickness=10, len=0.7,
+        title_text='CHF pro Kopf',
+        title_side='top',
+    ))
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=45, b=0),
+        height=480,
+        font=dict(size=12, color='#888'),
+    )
+    return fig
+
+
+_sq1_initial_figure = _build_sq1_map(YEARS[-1])
 
 
 # ---------------------------------------------------------
@@ -240,7 +273,7 @@ app.layout = [
                     html.Div([
                         dcc.Store(id='sq1-active-canton'),
                         html.Div([
-                            dcc.Graph(id='sq1-map', config={"displayModeBar": False}, clear_on_unhover=True),
+                            dcc.Graph(id='sq1-map', figure=_sq1_initial_figure, config={"displayModeBar": False, "scrollZoom": True}, clear_on_unhover=True),
                         ], style={
                             "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                             "padding": "12px", "flex": "1",
@@ -301,8 +334,14 @@ def render_map(_):
     fig.update_geos(fitbounds='locations', visible=False)
     return fig
 
+_BTN_ON  = {}
+_BTN_OFF = {"border": "1.5px solid #ccc", "color": "#ccc", "cursor": "default", "pointerEvents": "none"}
+
+
 @callback(
     Output('sq1-year-slider', 'value'),
+    Output('sq1-year-prev', 'style'),
+    Output('sq1-year-next', 'style'),
     Input('sq1-year-prev', 'n_clicks'),
     Input('sq1-year-next', 'n_clicks'),
     Input('sq1-year-slider', 'value'),
@@ -310,46 +349,22 @@ def render_map(_):
 )
 def sq1_step_year(_prev, _next, current_year, trend_click):
     from dash import ctx
+    new_year = current_year
     if ctx.triggered_id == 'sq1-year-prev':
-        return max(YEARS[0], current_year - 1)
-    if ctx.triggered_id == 'sq1-year-next':
-        return min(YEARS[-1], current_year + 1)
-    if ctx.triggered_id == 'sq1-trend' and trend_click and trend_click['points']:
+        new_year = max(YEARS[0], current_year - 1)
+    elif ctx.triggered_id == 'sq1-year-next':
+        new_year = min(YEARS[-1], current_year + 1)
+    elif ctx.triggered_id == 'sq1-trend' and trend_click and trend_click['points']:
         clicked_year = int(trend_click['points'][0]['x'])
         if clicked_year in YEARS:
-            return clicked_year
-    return current_year
+            new_year = clicked_year
+    slider_out = new_year if new_year != current_year else no_update
+    return slider_out, _BTN_OFF if new_year == YEARS[0] else _BTN_ON, _BTN_OFF if new_year == YEARS[-1] else _BTN_ON
 
 
 @callback(Output('sq1-map', 'figure'), Output('sq1-loading-anchor', 'children'), Input('sq1-year-slider', 'value'))
 def sq1_map(year):
-    dff = df_per_person[df_per_person['year'] == year]
-    fig = px.choropleth(
-        dff,
-        geojson=cantons,
-        locations='geo_name',
-        featureidkey='properties.name',
-        color='cost_per_capita',
-        hover_name='canton',
-        hover_data={'cost_per_capita': ':,.0f', 'geo_name': False},
-        color_continuous_scale='Reds',
-        labels={'cost_per_capita': 'CHF pro Kopf'},
-    )
-    fig.update_geos(fitbounds='locations', visible=False)
-    fig.update_coloraxes(colorbar=dict(
-        orientation='h',
-        x=0.5, y=1.01,
-        xanchor='center', yanchor='bottom',
-        thickness=10, len=0.7,
-        title_text='CHF pro Kopf',
-        title_side='top',
-    ))
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=45, b=0),
-        height=480,
-        font=dict(size=12, color='#888'),
-    )
-    return fig, None
+    return _build_sq1_map(year), None
 
 
 _geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
