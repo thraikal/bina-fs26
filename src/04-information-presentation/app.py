@@ -235,6 +235,12 @@ app.layout = [
                         dcc.Graph(id='sq1-map', config={"displayModeBar": False}),
                     ], style={
                         "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                        "padding": "20px", "marginBottom": "16px",
+                    }),
+                    html.Div([
+                        dcc.Graph(id='sq1-trend', config={"displayModeBar": False}),
+                    ], style={
+                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                         "padding": "20px",
                     }),
                 ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
@@ -318,6 +324,22 @@ def sq1_map(year):
     )
     fig.update_geos(fitbounds='locations', visible=False)
     fig.update_layout(margin={'r': 0, 't': 40, 'l': 0, 'b': 0}, height=480)
+    return fig
+
+
+@callback(Output('sq1-trend', 'figure'), Input('sq1-year-slider', 'value'))
+def sq1_trend(selected_year):
+    fig = px.line(
+        df_per_person.sort_values('year'),
+        x='year',
+        y='cost_per_capita',
+        color='canton',
+        markers=True,
+        labels={'year': 'Jahr', 'cost_per_capita': 'CHF pro Kopf', 'canton': 'Kanton'},
+        title='Entwicklung der Gesundheitskosten pro Kopf von 2011 bis 2024',
+    )
+    fig.add_vline(x=selected_year, line_dash='dot', line_color='gray', opacity=0.6)
+    fig.update_layout(height=500, legend={'orientation': 'v', 'x': 1.01})
     return fig
 
 
