@@ -229,8 +229,14 @@ app.layout = [
                         ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
                     ], style={
                         "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
-                        "padding": "16px 20px", "marginBottom": "16px",
+                        "padding": "16px 20px", "marginBottom": "8px",
                     }),
+                    html.Div(
+                        dcc.Loading(type='circle', color='#d8232a',
+                            children=html.Div(id='sq1-loading-anchor'),
+                        ),
+                        style={"height": "8px", "marginBottom": "8px", "display": "flex", "justifyContent": "center"},
+                    ),
                     html.Div([
                         dcc.Store(id='sq1-active-canton'),
                         html.Div([
@@ -315,7 +321,7 @@ def sq1_step_year(_prev, _next, current_year, trend_click):
     return current_year
 
 
-@callback(Output('sq1-map', 'figure'), Input('sq1-year-slider', 'value'))
+@callback(Output('sq1-map', 'figure'), Output('sq1-loading-anchor', 'children'), Input('sq1-year-slider', 'value'))
 def sq1_map(year):
     dff = df_per_person[df_per_person['year'] == year]
     fig = px.choropleth(
@@ -343,7 +349,7 @@ def sq1_map(year):
         height=480,
         font=dict(size=12, color='#888'),
     )
-    return fig
+    return fig, None
 
 
 _geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
