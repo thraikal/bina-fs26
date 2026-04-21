@@ -19,6 +19,10 @@ from utils.fetch_cantons import load_cantons_geojson
 # Styling
 # ---------------------------------------------------------
 
+BORDER = "1px solid #acb4bd"
+CARD_BG = "#ffffff"
+LIGHT_BG = "#ffffff"
+
 TAB_STYLE = {
     "borderTop": "none",
     "userSelect": "none",
@@ -176,30 +180,70 @@ app.layout = [
     html.Div([
         dcc.Tabs(id="tabs", value="overview", children=[
             dcc.Tab(label="Übersicht", value="overview", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
-                html.Div(children=[
-                    html.H1('From Data to Decisions', style={'textAlign': 'center'}),
-                    dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
-                    dcc.Graph(id='graph-content'),
-                    dcc.Graph(id='cantons-map')
-                ], style={"max-width": "1000px", "margin": "auto"})
+                html.Div([
+                    html.Div([
+                        html.Div("From Data to Decisions", style={
+                            "fontSize": "18px", "fontWeight": "700", "color": "#2f4356",
+                            "lineHeight": "1.3",
+                        }),
+                        html.Div("Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz", style={
+                            "fontSize": "12px", "color": "#888", "marginTop": "4px",
+                        }),
+                    ], style={"marginBottom": "20px"}),
+                    html.Div([
+                        html.Div([
+                            html.Label("Land:", style={"fontWeight": "600", "marginBottom": "8px", "display": "block", "fontSize": "13px", "color": "#555"}),
+                            dcc.Dropdown(df.country.unique(), 'Switzerland', id='country-dropdown'),
+                        ], style={"marginBottom": "16px"}),
+                        dcc.Graph(id='graph-content', config={"displayModeBar": False}),
+                    ], style={
+                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                        "padding": "20px", "marginBottom": "16px",
+                    }),
+                    html.Div([
+                        html.H3("Kantone - Bevölkerung", style={"margin": "0 0 12px", "fontSize": "13px", "color": "#555"}),
+                        dcc.Graph(id='cantons-map', config={"displayModeBar": False}),
+                    ], style={
+                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                        "padding": "20px",
+                    }),
+                ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"})
             ]),
             dcc.Tab(label="1. Kosten pro Kopf", value="sq1", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
                 html.Div([
-                    html.H1("Gesundheitskosten pro Kopf nach Kanton", style={'textAlign': 'left'}),
                     html.Div([
-                        html.Label("Jahr:", style={'marginRight': '12px', 'fontWeight': 'bold', 'whiteSpace': 'nowrap'}),
-                        html.Div(year_slider("sq1-year-slider", YEARS), style={'flex': '1'}),
-                        html.Button("‹", id='sq1-year-prev', n_clicks=0, className='year-step-btn'),
-                        html.Button("›", id='sq1-year-next', n_clicks=0, className='year-step-btn'),
-                    ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '20px', 'gap': '8px'}),
-                    dcc.Graph(id='sq1-map'),
-                ], style={'maxWidth': '1200px', 'margin': 'auto', 'padding': '20px'}),
+                        html.Div("Gesundheitskosten pro Kopf nach Kanton", style={
+                            "fontSize": "18px", "fontWeight": "700", "color": "#2f4356",
+                            "lineHeight": "1.3",
+                        }),
+                        html.Div("Kantonaler Vergleich auf Basis OKP-Daten", style={
+                            "fontSize": "12px", "color": "#888", "marginTop": "4px",
+                        }),
+                    ], style={"marginBottom": "20px"}),
+                    html.Div([
+                        html.Div([
+                            html.Label("Jahr:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
+                            html.Div(year_slider("sq1-year-slider", YEARS), style={"flex": "1"}),
+                            html.Button("‹", id='sq1-year-prev', n_clicks=0, className='year-step-btn'),
+                            html.Button("›", id='sq1-year-next', n_clicks=0, className='year-step-btn'),
+                        ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                    ], style={
+                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                        "padding": "16px 20px", "marginBottom": "16px",
+                    }),
+                    html.Div([
+                        dcc.Graph(id='sq1-map', config={"displayModeBar": False}),
+                    ], style={
+                        "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                        "padding": "20px",
+                    }),
+                ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
             ]),
             dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
             dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
             dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
         ]),
-    ], style={"max-width": "1500px", "margin": "auto", "minHeight": "calc(100vh - 92px)"}),
+    ], style={"max-width": "1500px", "margin": "auto", "minHeight": "calc(100vh - 92px)", "background": LIGHT_BG}),
     html.Div(
         html.Div(
             html.Div('Case Study · Business Intelligence & Analytics · MSc Wirtschaftsinformatik · 2026'),
