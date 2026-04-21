@@ -239,7 +239,7 @@ app.layout = [
                             "padding": "12px", "flex": "1",
                         }),
                         html.Div([
-                            dcc.Graph(id='sq1-trend', config={"modeBarButtons": [["toImage"]], "displaylogo": False}),
+                            dcc.Graph(id='sq1-trend', config={"displayModeBar": False}),
                         ], style={
                             "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                             "padding": "12px", "flex": "1",
