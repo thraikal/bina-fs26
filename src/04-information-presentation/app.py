@@ -4,6 +4,9 @@ import pandas as pd
 import sys
 from pathlib import Path
 import plotly.graph_objects as go
+import requests
+import certifi
+import io
 
 
 # ---------------------------------------------------------
@@ -40,8 +43,14 @@ TAB_SELECTED = {
 # ---------------------------------------------------------
 
 cantons = load_cantons_geojson(ROOT / "data/dashboard")
+url = "https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv"
 
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
+response = requests.get(url, timeout=60, verify=certifi.where())
+response.raise_for_status()
+
+df = pd.read_csv(io.StringIO(response.text))
+
+#df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv')
 
 # ==============================
 # SQ1: Health cost per person
