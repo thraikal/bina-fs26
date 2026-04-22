@@ -74,19 +74,18 @@ _COSTS_TO_GEO = {
 }
 
 _df_costs_raw = pd.read_csv(ROOT / "data/processed/gesundheitskosten.csv")
-_df_pop_raw = pd.read_csv(ROOT / "data/interim/bevoelkerung_2011_2026.csv", encoding='utf-8-sig')
+_df_pop_raw = pd.read_csv(ROOT / "data/processed/bevoelkerung.csv")
 
 _df_costs_canton = (
     _df_costs_raw[
-        (_df_costs_raw['AGE'] == '_T') & (_df_costs_raw['CANTON'] != '_T')
-    ][['TIME_PERIOD', 'Swiss cantons', 'costs_chf']]
-    .rename(columns={'TIME_PERIOD': 'year', 'Swiss cantons': 'canton'})
+        (_df_costs_raw['age'] == 'Total') & (_df_costs_raw['cantons'] != 'Total')
+    ][['year', 'cantons', 'costs_chf']]
+    .rename(columns={'cantons': 'canton'})
 )
 
 _df_pop_canton = (
-    _df_pop_raw[_df_pop_raw['Alter'] == 'Alter - Total']
-    [['Jahr', 'Kanton', 'Bestand am 31. Dezember']]
-    .rename(columns={'Jahr': 'year', 'Kanton': 'canton', 'Bestand am 31. Dezember': 'population'})
+    _df_pop_raw[_df_pop_raw['age_label'] == 'Alter - Total']
+    [['year', 'canton', 'population']]
     .copy()
 )
 _df_pop_canton['canton'] = _df_pop_canton['canton'].replace(_POP_TO_COSTS)
