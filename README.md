@@ -32,7 +32,7 @@ pip install -r requirements.txt
 1. Run:
 
 ```bash
-python src/app.py
+python src/04-information-presentation/app.py
 ```
 
 2. Open `http://127.0.0.1:8050/` in your browser.
