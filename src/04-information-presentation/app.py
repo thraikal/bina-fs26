@@ -56,22 +56,6 @@ df = pd.read_csv(io.StringIO(response.text))
 # SQ1: Health cost per person
 # ==============================
 
-_POP_TO_COSTS = {
-    'Schweiz': 'Total',
-    'Zürich': 'Zurich',
-    'Bern / Berne': 'Bern',
-    'Luzern': 'Lucerne',
-    'Fribourg / Freiburg': 'Fribourg',
-    'Genève': 'Geneva',
-    'Graubünden / Grigioni / Grischun': 'Graubünden',
-    'Valais / Wallis': 'Valais',
-}
-
-_COSTS_TO_GEO = {
-    'Zurich': 'Zürich',
-    'Lucerne': 'Luzern',
-    'Geneva': 'Genève',
-}
 
 _df_costs_raw = pd.read_csv(ROOT / "data/processed/gesundheitskosten.csv")
 _df_pop_raw = pd.read_csv(ROOT / "data/processed/bevoelkerung.csv")
@@ -84,19 +68,14 @@ _df_costs_canton = (
 )
 
 _df_pop_canton = (
-    _df_pop_raw[_df_pop_raw['age_label'] == 'Alter - Total']
-    [['year', 'canton', 'population']]
-    .copy()
+    _df_pop_raw[
+        (_df_pop_raw['age_label'] == 'Alter - Total') & (_df_pop_raw['canton'] != 'Schweiz')
+    ][['year', 'canton', 'population']]
 )
-_df_pop_canton['canton'] = _df_pop_canton['canton'].replace(_POP_TO_COSTS)
-_df_pop_canton = _df_pop_canton[_df_pop_canton['canton'] != 'Schweiz']
 
 df_per_person = (
     _df_costs_canton.merge(_df_pop_canton, on=['year', 'canton'])
-    .assign(
-        cost_per_capita=lambda d: d['costs_chf'] / d['population'],
-        geo_name=lambda d: d['canton'].replace(_COSTS_TO_GEO),
-    )
+    .assign(cost_per_capita=lambda d: d['costs_chf'] / d['population'])
 )
 
 YEARS = sorted(df_per_person['year'].unique())
@@ -107,11 +86,11 @@ def _build_sq1_map(year: int):
     fig = px.choropleth(
         dff,
         geojson=cantons,
-        locations='geo_name',
+        locations='canton',
         featureidkey='properties.name',
         color='cost_per_capita',
         hover_name='canton',
-        hover_data={'cost_per_capita': ':,.0f', 'geo_name': False},
+        hover_data={'cost_per_capita': ':,.0f'},
         color_continuous_scale='Reds',
         labels={'cost_per_capita': 'CHF pro Kopf'},
     )
@@ -375,9 +354,6 @@ def sq1_map(year):
     return _build_sq1_map(year), None
 
 
-_geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')['canton']
-
-
 @callback(
     Output('sq1-active-canton', 'data'),
     Input('sq1-map', 'hoverData'),
@@ -387,14 +363,12 @@ _geo_to_canton = df_per_person.drop_duplicates('geo_name').set_index('geo_name')
 def sq1_active_canton(map_hover, map_click, trend_hover):
     # click locks the selection permanently
     if map_click and map_click['points']:
-        geo = map_click['points'][0]['location']
-        return _geo_to_canton.get(geo)
+        return map_click['points'][0]['location']
     # hovering the trend line is more direct than hovering the map
     if trend_hover and trend_hover['points']:
         return trend_hover['points'][0]['customdata'][0]
     if map_hover and map_hover['points']:
-        geo = map_hover['points'][0]['location']
-        return _geo_to_canton.get(geo)
+        return map_hover['points'][0]['location']
     return None
 
 
