@@ -1,6 +1,7 @@
 from dash import Dash, html, dcc, callback, Output, Input, no_update
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import sys
 from pathlib import Path
 import plotly.graph_objects as go
@@ -79,6 +80,153 @@ df_per_person = (
 )
 
 YEARS = sorted(df_per_person['year'].unique())
+
+
+# ==============================
+# SQ3: Aging & costs
+# ==============================
+
+_df_66_raw = pd.read_csv(ROOT / "data/processed/bevoelkerung_66_share.csv")
+_df_kantone = pd.read_csv(ROOT / "data/processed/kantone.csv")
+
+df_aging = (
+    df_per_person[['year', 'canton', 'cost_per_capita']]
+    .merge(
+        _df_66_raw[_df_66_raw['canton'] != 'Schweiz'][['year', 'canton', 'population_share_66_plus']],
+        on=['year', 'canton'],
+    )
+    .merge(_df_kantone, on='canton')
+    .assign(share_pct=lambda d: d['population_share_66_plus'] * 100)
+)
+
+SQ3_YEARS = sorted(df_aging['year'].unique())
+
+_QUADRANT_COLORS = {
+    'Doppelbelastung': '#c0392b',
+    'Kostenausreisser': '#e67e22',
+    'Effizient trotz Alter': '#27ae60',
+    'Tiefe Belastung': '#2980b9',
+}
+
+
+def _sq3_quadrant(dff: pd.DataFrame) -> pd.Series:
+    avg_x = dff['share_pct'].mean()
+    avg_y = dff['cost_per_capita'].mean()
+    hi_x = dff['share_pct'] >= avg_x
+    hi_y = dff['cost_per_capita'] >= avg_y
+    labels = list(_QUADRANT_COLORS)
+    return pd.Series(
+        np.select(
+            [hi_x & hi_y, ~hi_x & hi_y, hi_x & ~hi_y],
+            labels[:3],
+            default=labels[3],
+        ),
+        index=dff.index,
+    )
+
+
+def _build_sq3_scatter(year: int) -> go.Figure:
+    dff = df_aging[df_aging['year'] == year].copy()
+    dff['quadrant'] = _sq3_quadrant(dff)
+
+    x, y = dff['share_pct'].values, dff['cost_per_capita'].values
+    slope, intercept = np.polyfit(x, y, 1)
+    y_pred = slope * x + intercept
+    r2 = 1 - np.sum((y - y_pred) ** 2) / np.sum((y - y.mean()) ** 2)
+    x_line = np.array([x.min(), x.max()])
+
+    avg_x, avg_y = x.mean(), y.mean()
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=x_line, y=slope * x_line + intercept, mode='lines',
+        line=dict(color='#999', width=1.5, dash='dash'),
+        name=f'Regression (R² = {r2:.2f})',
+        hoverinfo='skip',
+    ))
+
+    fig.add_vline(x=avg_x, line_dash='dot', line_color='#ccc', line_width=1)
+    fig.add_hline(y=avg_y, line_dash='dot', line_color='#ccc', line_width=1)
+
+    for quad, color in _QUADRANT_COLORS.items():
+        sub = dff[dff['quadrant'] == quad]
+        fig.add_trace(go.Scatter(
+            x=sub['share_pct'], y=sub['cost_per_capita'],
+            mode='markers+text',
+            text=sub['icc'],
+            textposition='top center',
+            textfont=dict(size=10, color=color),
+            marker=dict(size=10, color=color, opacity=0.85),
+            name=quad,
+            customdata=sub[['canton', 'share_pct', 'cost_per_capita']].values,
+            hovertemplate='<b>%{customdata[0]}</b><br>66+: %{customdata[1]:.1f}%<br>Kosten: CHF %{customdata[2]:,.0f}<extra></extra>',
+        ))
+
+    fig.update_layout(
+        height=480,
+        margin=dict(l=60, t=30, b=60, r=20),
+        paper_bgcolor='white', plot_bgcolor='white',
+        font=dict(size=12, color='#888'),
+        xaxis=dict(title='Anteil Bevölkerung 66+ (%)', gridcolor='#f0f0f0', zeroline=False),
+        yaxis=dict(title='Gesundheitskosten pro Kopf (CHF)', gridcolor='#f0f0f0', zeroline=False),
+        legend=dict(orientation='h', x=0, y=-0.18, xanchor='left', bgcolor='rgba(0,0,0,0)'),
+        annotations=[dict(
+            x=0.99, y=0.99, xref='paper', yref='paper',
+            text=f'R² = {r2:.2f}',
+            showarrow=False, xanchor='right', yanchor='top',
+            bgcolor='rgba(255,255,255,0.85)', bordercolor='#ddd', borderwidth=1,
+            font=dict(size=13, color='#333'),
+        )],
+    )
+    return fig
+
+
+def _build_sq3_map(year: int) -> go.Figure:
+    dff = df_aging[df_aging['year'] == year]
+    fig = px.choropleth(
+        dff, geojson=cantons,
+        locations='canton', featureidkey='properties.name',
+        color='share_pct',
+        hover_name='canton',
+        hover_data={'share_pct': ':.1f', 'cost_per_capita': ':,.0f', 'canton': False},
+        color_continuous_scale='Oranges',
+        labels={'share_pct': '% 66+', 'cost_per_capita': 'CHF/Kopf'},
+    )
+    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_coloraxes(colorbar=dict(
+        orientation='h', x=0.5, y=1.01, xanchor='center', yanchor='bottom',
+        thickness=10, len=0.7, title_text='Anteil 66+ (%)', title_side='top',
+    ))
+    fig.update_layout(margin=dict(l=0, r=0, t=45, b=0), height=480, font=dict(size=12, color='#888'))
+    return fig
+
+
+def _build_sq3_kpis(year: int) -> list:
+    dff = df_aging[df_aging['year'] == year]
+    avg_share = dff['share_pct'].mean()
+    top = dff.loc[dff['share_pct'].idxmax()]
+    r = np.corrcoef(dff['share_pct'].values, dff['cost_per_capita'].values)[0, 1]
+
+    def _kpi(title, value, note=''):
+        return html.Div([
+            html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
+                                   "letterSpacing": "0.05em", "marginBottom": "4px"}),
+            html.Div(value, style={"fontSize": "22px", "fontWeight": "700", "color": "#2f4356"}),
+            html.Div(note, style={"fontSize": "11px", "color": "#aaa", "marginTop": "2px"}),
+        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                  "padding": "14px 18px", "flex": "1", "minWidth": "140px"})
+
+    return [
+        _kpi("Ø Anteil 66+", f"{avg_share:.1f}%", "alle Kantone"),
+        _kpi("Höchster 66+-Anteil", top['icc'], f"{top['share_pct']:.1f}% · {top['canton']}"),
+        _kpi("Korrelation r", f"{r:.2f}", "Alterung ↔ Kosten/Kopf"),
+    ]
+
+
+_sq3_initial_scatter = _build_sq3_scatter(SQ3_YEARS[-1])
+_sq3_initial_map = _build_sq3_map(SQ3_YEARS[-1])
+_sq3_initial_kpis = _build_sq3_kpis(SQ3_YEARS[-1])
 
 
 def _build_sq1_map(year: int):
@@ -275,7 +423,42 @@ app.layout = [
                 ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
             ]),
             dcc.Tab(label="2. Prämien & Kosten", value="sq2", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
-            dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
+            dcc.Tab(label="3. Alterung & Kosten", value="sq3", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[
+                html.Div([
+                    html.Div([
+                        html.Div("Alterung & Gesundheitskosten", style={
+                            "fontSize": "18px", "fontWeight": "700", "color": "#2f4356", "lineHeight": "1.3",
+                        }),
+                        html.Div("Korrelation zwischen Anteil 66+ und Kosten pro Kopf nach Kanton", style={
+                            "fontSize": "12px", "color": "#888", "marginTop": "4px",
+                        }),
+                    ], style={"marginBottom": "20px"}),
+                    html.Div(id='sq3-kpis', children=_sq3_initial_kpis,
+                             style={"display": "flex", "gap": "12px", "marginBottom": "16px"}),
+                    html.Div([
+                        html.Div([
+                            html.Label("Jahr:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
+                            html.Div(year_slider("sq3-year-slider", SQ3_YEARS), style={"flex": "1"}),
+                            html.Button("‹", id='sq3-year-prev', n_clicks=0, className='year-step-btn'),
+                            html.Button("›", id='sq3-year-next', n_clicks=0, className='year-step-btn'),
+                        ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                    ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                              "padding": "16px 20px", "marginBottom": "16px"}),
+                    html.Div([
+                        html.Div([
+                            html.H3("Korrelation: Bevölkerungsalterung & Kosten pro Kopf", style={"margin": "0 0 2px", "fontSize": "13px", "color": "#555"}),
+                            html.P("Gestrichelte Linie = Regressionsgerade · Kreuzlinien = Schweizer Durchschnitt", style={"fontSize": "11px", "color": "#bbb", "margin": "0 0 8px"}),
+                            dcc.Graph(id='sq3-scatter', figure=_sq3_initial_scatter, config={"displayModeBar": False}),
+                        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                                  "padding": "12px", "flex": "2"}),
+                        html.Div([
+                            html.H3("Anteil 66+ nach Kanton", style={"margin": "0 0 8px", "fontSize": "13px", "color": "#555"}),
+                            dcc.Graph(id='sq3-map', figure=_sq3_initial_map, config={"displayModeBar": False}),
+                        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                                  "padding": "12px", "flex": "1"}),
+                    ], style={"display": "flex", "gap": "16px"}),
+                ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
+            ]),
             dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
         ]),
     ], style={"max-width": "1500px", "margin": "auto", "minHeight": "calc(100vh - 92px)", "background": LIGHT_BG}),
@@ -413,6 +596,35 @@ def sq1_trend(selected_year, highlighted):
                     bgcolor='rgba(255,255,255,0.7)'),
     )
     return fig
+
+
+@callback(
+    Output('sq3-year-slider', 'value'),
+    Output('sq3-year-prev', 'style'),
+    Output('sq3-year-next', 'style'),
+    Input('sq3-year-prev', 'n_clicks'),
+    Input('sq3-year-next', 'n_clicks'),
+    Input('sq3-year-slider', 'value'),
+)
+def sq3_step_year(_prev, _next, current_year):
+    from dash import ctx
+    new_year = current_year
+    if ctx.triggered_id == 'sq3-year-prev':
+        new_year = max(SQ3_YEARS[0], current_year - 1)
+    elif ctx.triggered_id == 'sq3-year-next':
+        new_year = min(SQ3_YEARS[-1], current_year + 1)
+    slider_out = new_year if new_year != current_year else no_update
+    return slider_out, _BTN_OFF if new_year == SQ3_YEARS[0] else _BTN_ON, _BTN_OFF if new_year == SQ3_YEARS[-1] else _BTN_ON
+
+
+@callback(
+    Output('sq3-scatter', 'figure'),
+    Output('sq3-map', 'figure'),
+    Output('sq3-kpis', 'children'),
+    Input('sq3-year-slider', 'value'),
+)
+def sq3_charts(year):
+    return _build_sq3_scatter(year), _build_sq3_map(year), _build_sq3_kpis(year)
 
 
 if __name__ == '__main__':
