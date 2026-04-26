@@ -101,6 +101,21 @@ df_aging = (
 
 SQ3_YEARS = sorted(df_aging['year'].unique())
 
+_df_costs_ch = (
+    _df_costs_raw[(_df_costs_raw['age'] == 'Total') & (_df_costs_raw['cantons'] == 'Total')]
+    [['year', 'costs_chf']]
+)
+_df_pop_ch = (
+    _df_pop_raw[(_df_pop_raw['age_label'] == 'Alter - Total') & (_df_pop_raw['canton'] == 'Schweiz')]
+    [['year', 'population']]
+)
+df_aging_ch = (
+    _df_costs_ch.merge(_df_pop_ch, on='year')
+    .assign(cost_per_capita=lambda d: d['costs_chf'] / d['population'])
+    .merge(_df_66_raw[_df_66_raw['canton'] == 'Schweiz'][['year', 'population_share_66_plus']], on='year')
+    .assign(share_pct=lambda d: d['population_share_66_plus'] * 100)
+)[['year', 'cost_per_capita', 'share_pct']].sort_values('year')
+
 _QUADRANT_COLORS = {
     'Doppelbelastung': '#c0392b',
     'Kostenausreisser': '#e67e22',
@@ -125,7 +140,7 @@ def _sq3_quadrant(dff: pd.DataFrame) -> pd.Series:
     )
 
 
-def _build_sq3_scatter(year: int) -> go.Figure:
+def _build_sq3_scatter(year: int, selected_canton: str | None = None) -> go.Figure:
     dff = df_aging[df_aging['year'] == year].copy()
     dff['quadrant'] = _sq3_quadrant(dff)
 
@@ -138,6 +153,21 @@ def _build_sq3_scatter(year: int) -> go.Figure:
     avg_x, avg_y = x.mean(), y.mean()
 
     fig = go.Figure()
+
+    # Canton trajectory across all years (drawn first so it sits underneath scatter points)
+    if selected_canton:
+        traj = df_aging[df_aging['canton'] == selected_canton].sort_values('year')
+        if not traj.empty:
+            icc = traj['icc'].iloc[0]
+            fig.add_trace(go.Scatter(
+                x=traj['share_pct'], y=traj['cost_per_capita'],
+                mode='lines+markers',
+                line=dict(color='#555', width=1.5, dash='dot'),
+                marker=dict(size=5, color='#555', opacity=0.5),
+                customdata=traj['year'].values,
+                name=f'{icc} – Verlauf {SQ3_YEARS[0]}–{SQ3_YEARS[-1]}',
+                hovertemplate='%{customdata}: %{x:.1f}% · CHF %{y:,.0f}<extra></extra>',
+            ))
 
     fig.add_trace(go.Scatter(
         x=x_line, y=slope * x_line + intercept, mode='lines',
@@ -222,6 +252,63 @@ def _build_sq3_kpis(year: int) -> list:
         _kpi("Höchster 66+-Anteil", top['icc'], f"{top['share_pct']:.1f}% · {top['canton']}"),
         _kpi("Korrelation r", f"{r:.2f}", "Alterung ↔ Kosten/Kopf"),
     ]
+
+
+def _build_sq3_detail(canton: str | None = None) -> go.Figure:
+    fig = go.Figure()
+
+    # Switzerland baseline (always shown as dashed lines)
+    fig.add_trace(go.Scatter(
+        x=df_aging_ch['year'], y=df_aging_ch['cost_per_capita'],
+        mode='lines+markers', name='CH – Kosten pro Kopf',
+        line=dict(color='#2f4356', width=1.5, dash='dash'), marker=dict(size=5),
+        yaxis='y1',
+        hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
+    ))
+    fig.add_trace(go.Scatter(
+        x=df_aging_ch['year'], y=df_aging_ch['share_pct'],
+        mode='lines+markers', name='CH – Anteil 66+',
+        line=dict(color='#e67e22', width=1.5, dash='dash'), marker=dict(size=5),
+        yaxis='y2',
+        hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
+    ))
+
+    if canton:
+        dff = df_aging[df_aging['canton'] == canton].sort_values('year')
+        icc = dff['icc'].iloc[0]
+        fig.add_trace(go.Scatter(
+            x=dff['year'], y=dff['cost_per_capita'],
+            mode='lines+markers', name=f'{icc} – Kosten pro Kopf',
+            line=dict(color='#2f4356', width=2.5), marker=dict(size=7),
+            yaxis='y1',
+            hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
+        ))
+        fig.add_trace(go.Scatter(
+            x=dff['year'], y=dff['share_pct'],
+            mode='lines+markers', name=f'{icc} – Anteil 66+',
+            line=dict(color='#e67e22', width=2.5), marker=dict(size=7),
+            yaxis='y2',
+            hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
+        ))
+
+    fig.update_layout(
+        height=260,
+        margin=dict(l=60, t=12, b=40, r=60),
+        paper_bgcolor='white', plot_bgcolor='white',
+        font=dict(size=12, color='#888'),
+        xaxis=dict(gridcolor='#f0f0f0', zeroline=False, dtick=1),
+        yaxis=dict(
+            title=dict(text='CHF pro Kopf', font=dict(color='#2f4356')),
+            tickfont=dict(color='#2f4356'), gridcolor='#f0f0f0', zeroline=False,
+        ),
+        yaxis2=dict(
+            title=dict(text='Anteil 66+ (%)', font=dict(color='#e67e22')),
+            tickfont=dict(color='#e67e22'), overlaying='y', side='right',
+            zeroline=False, showgrid=False,
+        ),
+        legend=dict(orientation='h', x=0, y=-0.2, xanchor='left', bgcolor='rgba(0,0,0,0)'),
+    )
+    return fig
 
 
 _sq3_initial_scatter = _build_sq3_scatter(SQ3_YEARS[-1])
@@ -457,6 +544,8 @@ app.layout = [
                         ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                                   "padding": "12px", "flex": "1"}),
                     ], style={"display": "flex", "gap": "16px"}),
+                    dcc.Store(id='sq3-selected-canton'),
+                    html.Div(id='sq3-detail', style={"marginTop": "16px"}),
                 ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
             ]),
             dcc.Tab(label="4. Segmente & Prognose", value="sq4", className="tab", style=TAB_STYLE, selected_style=TAB_SELECTED, children=[]),
@@ -622,9 +711,43 @@ def sq3_step_year(_prev, _next, current_year):
     Output('sq3-map', 'figure'),
     Output('sq3-kpis', 'children'),
     Input('sq3-year-slider', 'value'),
+    Input('sq3-selected-canton', 'data'),
 )
-def sq3_charts(year):
-    return _build_sq3_scatter(year), _build_sq3_map(year), _build_sq3_kpis(year)
+def sq3_charts(year, selected_canton):
+    return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year)
+
+
+@callback(
+    Output('sq3-selected-canton', 'data'),
+    Input('sq3-scatter', 'clickData'),
+    Input('sq3-map', 'clickData'),
+    prevent_initial_call=True,
+)
+def sq3_select_canton(scatter_click, map_click):
+    from dash import ctx
+    if ctx.triggered_id == 'sq3-scatter' and scatter_click:
+        return scatter_click['points'][0]['customdata'][0]
+    if ctx.triggered_id == 'sq3-map' and map_click:
+        return map_click['points'][0]['location']
+    return no_update
+
+
+@callback(
+    Output('sq3-detail', 'children'),
+    Input('sq3-selected-canton', 'data'),
+)
+def sq3_detail_chart(canton):
+    if canton:
+        icc = df_aging.loc[df_aging['canton'] == canton, 'icc'].iloc[0]
+        title = f"Entwicklung {canton} ({icc}) vs. Schweiz"
+    else:
+        title = "Entwicklung Schweiz (Gesamtschweiz)"
+    return [
+        html.Div([
+            html.H3(title, style={"margin": "0 0 8px", "fontSize": "13px", "color": "#555"}),
+            dcc.Graph(figure=_build_sq3_detail(canton), config={"displayModeBar": False}),
+        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px"}),
+    ]
 
 
 if __name__ == '__main__':
