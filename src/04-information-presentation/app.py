@@ -6,7 +6,7 @@ HERE = Path(__file__).parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(HERE))
 
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Input, Output, ctx
 
 import tabs.overview as overview
 import tabs.sq1 as sq1
@@ -93,6 +93,17 @@ app.layout = [
         },
     ),
 ]
+
+@app.callback(
+    Output("tabs", "value"),
+    Input("kpi-cost", "n_clicks"),
+    Input("kpi-age", "n_clicks"),
+    Input("kpi-priority", "n_clicks"),
+    prevent_initial_call=True,
+)
+def _navigate_from_kpi(_c, _a, _p):
+    return {"kpi-cost": "sq1", "kpi-age": "sq3", "kpi-priority": "sq4"}.get(ctx.triggered_id, "overview")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

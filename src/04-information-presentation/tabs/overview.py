@@ -14,17 +14,24 @@ _avg_age_share = _panel_latest['population_share_66_plus'].mean()
 _priority_count = int((df_manager_priorities['priority_flag'] == 'Prioritär beobachten').sum())
 
 
-def _kpi_card(label, value, sub, accent):
-    return html.Div([
+def _kpi_card(label, value, sub, accent, card_id=None):
+    extra = {"id": card_id, "n_clicks": 0, "className": "kpi-card-link"} if card_id else {}
+    children = [
         html.Div(value, style={
             "fontSize": "26px", "fontWeight": "700", "color": accent, "lineHeight": "1.2",
         }),
         html.Div(label, style={"fontSize": "12px", "color": "#444", "marginTop": "5px", "fontWeight": "600"}),
         html.Div(sub, style={"fontSize": "11px", "color": "#aaa", "marginTop": "2px"}),
-    ], style={
+    ]
+    if card_id:
+        children.append(html.Div("Detail ansehen →", className="kpi-hint", style={
+            "fontSize": "10px", "color": "#d8232a", "marginTop": "10px", "fontWeight": "600",
+        }))
+    return html.Div(children, style={
         "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
         "padding": "16px 20px", "flex": "1",
-    })
+        **({"cursor": "pointer"} if card_id else {}),
+    }, **extra)
 
 
 def _formula_row(weight, label, color):
@@ -130,18 +137,21 @@ tab = dcc.Tab(
                     f"CHF {_avg_cost:,.0f}",
                     f"Durchschnitt aller Kantone {_latest_year}",
                     "#d8232a",
+                    card_id="kpi-cost",
                 ),
                 _kpi_card(
                     "Ø Bevölkerungsanteil 66+",
                     f"{_avg_age_share:.1%}",
                     f"Durchschnitt aller Kantone {_latest_year}",
                     "#2f4356",
+                    card_id="kpi-age",
                 ),
                 _kpi_card(
                     "Prioritär zu beobachtende Kantone",
                     str(_priority_count),
                     "Hohe Belastung oder starker Anstieg bis 2030",
                     "#d8232a",
+                    card_id="kpi-priority",
                 ),
             ], style={"display": "flex", "gap": "16px", "marginBottom": "16px"}),
 

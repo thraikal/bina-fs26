@@ -2,3 +2,18 @@
 .dash-range-slider-input {
     --Dash-Fill-Interactive-Strong: #d8232a;
 }
+
+.kpi-card-link {
+    transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
+}
+.kpi-card-link:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+    border-color: #d8232a !important;
+}
+.kpi-card-link .kpi-hint {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.kpi-card-link:hover .kpi-hint {
+    opacity: 1;
+}
