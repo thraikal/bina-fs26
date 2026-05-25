@@ -1,5 +1,6 @@
 import io
 import json
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -35,7 +36,11 @@ def _unzip_gpkg(zip_bytes: bytes) -> bytes:
 
 
 def _convert_to_geojson(gpkg_bytes: bytes, dest: Path) -> None:
-    gdf = gpd.read_file(io.BytesIO(gpkg_bytes), layer=LAYER).to_crs(4326)
+    with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as tmp:
+        tmp.write(gpkg_bytes)
+        tmp_path = tmp.name
+    gdf = gpd.read_file(tmp_path, layer=LAYER).to_crs(4326)
+    Path(tmp_path).unlink(missing_ok=True)
     dest.parent.mkdir(parents=True, exist_ok=True)
     gdf.to_file(dest, driver="GeoJSON")
     print(f"Saved to {dest}")
