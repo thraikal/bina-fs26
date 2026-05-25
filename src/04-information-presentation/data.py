@@ -65,3 +65,6 @@ df_aging_ch = (
     .merge(_df_66_raw[_df_66_raw['canton'] == 'Schweiz'][['year', 'population_share_66_plus']], on='year')
     .assign(share_pct=lambda d: d['population_share_66_plus'] * 100)
 )[['year', 'cost_per_capita', 'share_pct']].sort_values('year')
+
+df_analysis_panel = pd.read_csv(ROOT / "data/processed/analysis_panel.csv")
+df_manager_priorities = pd.read_csv(ROOT / "data/processed/manager_priorities.csv")
