@@ -28,7 +28,7 @@ def _enrich(year: int):
 def _build_kpis(year: int, canton: str | None = None) -> list:
     dff = _enrich(year)
 
-    def _kpi(title, value, note='', note_color='#aaa'):
+    def _kpi(title, value, note='', note_color='#666'):
         return html.Div([
             html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
                                    "letterSpacing": "0.05em", "marginBottom": "4px"}),
@@ -49,10 +49,10 @@ def _build_kpis(year: int, canton: str | None = None) -> list:
             _kpi("Prämien-Kosten-Gap", f"{gap:+.2f}",
                  f"Prämien {direction} Kostenprofil",
                  note_color='#d8232a' if gap > 0 else '#2f4356'),
-            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}",
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
                  f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
-            _kpi("Median-Basisprämie", f"CHF {row['premium_median_monthly']:,.0f}/Mt.",
+            _kpi("Median-Basisprämie", f"CHF {row['premium_median_monthly']:,.0f}".replace(',', "'") + " / Monat",
                  f"{'+'if premium_delta>=0 else ''}{premium_delta:.1f}% vs. CH-Schnitt",
                  note_color='#c0392b' if premium_delta > 0 else '#27ae60'),
         ]

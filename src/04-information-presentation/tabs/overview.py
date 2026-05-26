@@ -114,7 +114,7 @@ tab = dcc.Tab(
 
             html.Div([
                 _kpi_card("factor-cost",    f"CHF {_avg_cost / 12:,.0f}".replace(',', "'") + " / Monat", "Ø Gesundheitskosten pro Kopf"),
-                _kpi_card("factor-premium", f"CHF {_avg_premium:,.0f} / Monat", "Ø Median-Basisprämie aller Kantone"),
+                _kpi_card("factor-premium", f"CHF {_avg_premium:,.0f}".replace(',', "'") + " / Monat", "Ø Median-Basisprämie aller Kantone"),
                 _kpi_card("factor-age",     f"{_avg_age_share:.1%}", "Ø Bevölkerungsanteil 66+ (Schweiz)"),
             ], style={"display": "flex", "gap": "16px", "marginBottom": "16px"}),
 

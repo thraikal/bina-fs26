@@ -109,7 +109,7 @@ def _build_sq3_map(year: int) -> go.Figure:
 def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
     dff = df_aging[df_aging['year'] == year]
 
-    def _kpi(title, value, note='', note_color='#aaa'):
+    def _kpi(title, value, note='', note_color='#666'):
         return html.Div([
             html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
                                    "letterSpacing": "0.05em", "marginBottom": "4px"}),
@@ -129,7 +129,7 @@ def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
             _kpi("Anteil 66+", f"{row['share_pct']:.1f}%",
                  f"{'+'if share_delta>=0 else ''}{share_delta:.1f}% vs. CH-Schnitt",
                  note_color='#e67e22' if share_delta > 0 else '#2980b9'),
-            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}",
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
                  f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
             _kpi("Rang nach Kosten", f"{rank} von {len(dff)}", "von teuer nach günstig"),
@@ -141,7 +141,7 @@ def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
     return [
         _kpi("Ø Anteil 66+", f"{avg_share:.1f}%", "alle Kantone"),
         _kpi("Höchste Kosten", top_cost['icc'],
-             f"CHF {top_cost['cost_per_capita']:,.0f} · {top_cost['canton']}"),
+             f"CHF {top_cost['cost_per_capita']:,.0f}".replace(',', "'") + f" · {top_cost['canton']}"),
         _kpi("Höchster 66+-Anteil", top_age['icc'],
              f"{top_age['share_pct']:.1f}% · {top_age['canton']}"),
     ]
