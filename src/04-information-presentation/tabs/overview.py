@@ -103,11 +103,11 @@ tab = dcc.Tab(
         html.Div([
             # Header
             html.Div([
-                html.Div("Kantonale Gesundheitsbelastung im Überblick", style={
+                html.Div("Kantonale Belastung im Überblick", style={
                     "fontSize": "18px", "fontWeight": "700", "color": "#2f4356",
                 }),
                 html.Div(
-                    f"Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz, Analysefenster {_baseline_year}–{_latest_year}",
+                    f"Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz, ({_baseline_year}-{_latest_year})",
                     style={"fontSize": "12px", "color": "#888", "marginTop": "4px"},
                 ),
             ], style={"marginBottom": "20px"}),
@@ -121,18 +121,18 @@ tab = dcc.Tab(
             # Belastungsindex entry card
             html.Div([
                 html.Div("Was ist der Belastungsindex?", style={
-                    "fontSize": "14px", "fontWeight": "700", "color": "#2f4356", "marginBottom": "6px",
+                    "fontSize": "13px", "fontWeight": "700", "color": "#2f4356", "marginBottom": "6px",
                 }),
-                html.Div(
-                    "Der Belastungsindex misst, wie stark ein Kanton vom Schweizer Durchschnitt abweicht — "
-                    "positiv bedeutet stärker belastet, negativ bedeutet geringer belastet. "
-                    "Er setzt sich aus drei gleich gewichteten Faktoren zusammen:",
+                html.Div("Der Belastungsindex misst, wie stark ein Kanton im jeweiligen Jahr vom Schweizer Durchschnitt abweicht.",
+                    style={"fontSize": "12px", "color": "#555", "lineHeight": "1.6", "marginBottom": "6px"},
+                ),
+                html.Div("Berücksichtigt werden dabei folgende Faktoren mit unterschiedlicher Gewichtung:",
                     style={"fontSize": "12px", "color": "#555", "lineHeight": "1.6", "marginBottom": "10px"},
                 ),
                 html.Ul([
-                    html.Li("45% — Gesundheitskosten pro Kopf nach Kanton (grösster Treiber)", style={"marginBottom": "4px"}),
-                    html.Li("30% — Bevölkerungsanteil 66+ als Proxy für langfristigen Kostendruck", style={"marginBottom": "4px"}),
-                    html.Li("25% — Median-Basisprämie relativ zum kantonalen Kostenprofil"),
+                    html.Li("Gesundheitskosten pro Kopf (45%)", style={"marginBottom": "4px"}),
+                    html.Li("Bevölkerungsanteil 66+ (30%)", style={"marginBottom": "4px"}),
+                    html.Li("Median-Basisprämie (25%)"),
                 ], style={"fontSize": "12px", "color": "#555", "lineHeight": "1.6", "margin": "0", "paddingLeft": "20px"}),
             ], style={
                 "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
@@ -144,8 +144,8 @@ tab = dcc.Tab(
                 # Choropleth
                 html.Div([
                     html.Div(
-                        f"Kantonaler Belastungsindex {_latest_year}",
-                        style={"fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px"},
+                        f"Belastung {_latest_year}",
+                        style={"fontSize": "13px", "fontWeight": "700", "color": "#2f4356"},
                     ),
                     html.Div(
                         dcc.Graph(figure=_build_belastung_map(), config={"displayModeBar": False},
@@ -177,7 +177,7 @@ tab = dcc.Tab(
                         ])),
                         html.Tbody(_priority_rows()),
                     ], style={"width": "100%", "borderCollapse": "collapse"}),
-                    html.Div("Vollanalyse in SQ4 ansehen →", className="kpi-hint", style={
+                    html.Div("Detail ansehen →", className="kpi-hint", style={
                         "fontSize": "10px", "color": "#d8232a", "marginTop": "10px", "fontWeight": "600",
                     }),
                 ], id="overview-priority-table", n_clicks=0, className="kpi-card-link", style={
