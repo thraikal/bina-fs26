@@ -50,10 +50,10 @@ def _build_kpis(year: int, canton: str | None = None) -> list:
                  f"Prämien {direction} Kostenprofil",
                  note_color='#d8232a' if gap > 0 else '#2f4356'),
             _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
-                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
             _kpi("Median-Basisprämie", f"CHF {row['premium_median_monthly']:,.0f}".replace(',', "'") + " / Monat",
-                 f"{'+'if premium_delta>=0 else ''}{premium_delta:.1f}% vs. CH-Schnitt",
+                 f"{'+'if premium_delta>=0 else ''}{premium_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if premium_delta > 0 else '#27ae60'),
         ]
 

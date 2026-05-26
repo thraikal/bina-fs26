@@ -127,10 +127,10 @@ def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
         rank = int((dff['cost_per_capita'] > row['cost_per_capita']).sum()) + 1
         return [
             _kpi("Anteil 66+", f"{row['share_pct']:.1f}%",
-                 f"{'+'if share_delta>=0 else ''}{share_delta:.1f}% vs. CH-Schnitt",
+                 f"{'+'if share_delta>=0 else ''}{share_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#e67e22' if share_delta > 0 else '#2980b9'),
             _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
-                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
             _kpi("Rang nach Kosten", f"{rank} von {len(dff)}", "von teuer nach günstig"),
         ]

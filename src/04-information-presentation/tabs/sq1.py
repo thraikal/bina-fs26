@@ -33,7 +33,7 @@ def _build_sq1_kpis(year: int, canton: str | None = None) -> list:
         growth = (row['cost_per_capita'] - first_year_cost) / first_year_cost * 100
         return [
             _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
-                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
             _kpi("Rang nach Kosten", f"{rank} von {len(dff)}", "von teuer nach günstig"),
             _kpi(f"Wachstum seit {YEARS[0]}",
