@@ -1,8 +1,10 @@
 import plotly.express as px
-from dash import dcc, html, callback, Output, Input, no_update
+from dash import dcc, html, callback, Output, Input, State, no_update
 
 from data import cantons, df_per_person, YEARS
 from styles import BORDER, CARD_BG, TAB_STYLE, TAB_SELECTED, year_slider
+
+_CANTON_OPTIONS = sorted(df_per_person['canton'].unique())
 
 _BTN_ON = {}
 _BTN_OFF = {"border": "1.5px solid #ccc", "color": "#ccc", "cursor": "default", "pointerEvents": "none"}
@@ -50,7 +52,18 @@ tab = dcc.Tab(
                     html.Div(year_slider("sq1-year-slider", YEARS), style={"flex": "1"}),
                     html.Button("‹", id='sq1-year-prev', n_clicks=0, className='year-step-btn'),
                     html.Button("›", id='sq1-year-next', n_clicks=0, className='year-step-btn'),
-                ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "position": "relative", "zIndex": 2}),
+                html.Div([
+                    html.Label("Kanton:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
+                    dcc.Dropdown(
+                        id='sq1-canton-dropdown',
+                        options=[{"label": c, "value": c} for c in _CANTON_OPTIONS],
+                        value=None,
+                        clearable=True,
+                        placeholder="Alle Kantone",
+                        style={"flex": "1", "fontSize": "13px"},
+                    ),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "marginTop": "10px"}),
             ], style={
                 "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                 "padding": "16px 20px", "marginBottom": "8px",
@@ -104,14 +117,27 @@ def sq1_map(year):
 
 
 @callback(
+    Output('sq1-canton-dropdown', 'value'),
+    Input('sq1-map', 'clickData'),
+    State('sq1-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq1_map_click_to_dropdown(click_data, current_value):
+    if not click_data or not click_data['points']:
+        return no_update
+    clicked = click_data['points'][0]['location']
+    return None if clicked == current_value else clicked
+
+
+@callback(
     Output('sq1-active-canton', 'data'),
     Input('sq1-map', 'hoverData'),
-    Input('sq1-map', 'clickData'),
+    Input('sq1-canton-dropdown', 'value'),
     Input('sq1-trend', 'hoverData'),
 )
-def sq1_active_canton(map_hover, map_click, trend_hover):
-    if map_click and map_click['points']:
-        return map_click['points'][0]['location']
+def sq1_active_canton(map_hover, dropdown_value, trend_hover):
+    if dropdown_value:
+        return dropdown_value
     if trend_hover and trend_hover['points']:
         return trend_hover['points'][0]['customdata'][0]
     if map_hover and map_hover['points']:
