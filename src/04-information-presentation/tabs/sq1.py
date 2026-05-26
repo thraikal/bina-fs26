@@ -117,6 +117,15 @@ def sq1_map(year):
 
 
 @callback(
+    Output('sq1-map', 'clickData'),
+    Input('sq1-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq1_reset_click_data(dropdown_value):
+    return None if dropdown_value is None else no_update
+
+
+@callback(
     Output('sq1-canton-dropdown', 'value'),
     Input('sq1-map', 'clickData'),
     State('sq1-canton-dropdown', 'value'),
