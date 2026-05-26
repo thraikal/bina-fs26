@@ -46,7 +46,7 @@ def _build_sq3_scatter(year: int, selected_canton: str | None = None) -> go.Figu
                 line=dict(color='#555', width=1.5, dash='dot'),
                 marker=dict(size=5, color='#555', opacity=0.5),
                 customdata=traj['year'].values,
-                name=f'{icc} – Verlauf {SQ3_YEARS[0]}–{SQ3_YEARS[-1]}',
+                name=f'{icc}: Verlauf {SQ3_YEARS[0]}-{SQ3_YEARS[-1]}',
                 hovertemplate='%{customdata}: %{x:.1f}% · CHF %{y:,.0f}<extra></extra>',
             ))
 
@@ -130,13 +130,13 @@ def _build_sq3_detail(canton: str | None = None) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df_aging_ch['year'], y=df_aging_ch['cost_per_capita'],
-        mode='lines+markers', name='CH – Kosten pro Kopf',
+        mode='lines+markers', name='CH: Kosten pro Kopf',
         line=dict(color='#2f4356', width=1.5, dash='dash'), marker=dict(size=5),
         yaxis='y1', hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
     ))
     fig.add_trace(go.Scatter(
         x=df_aging_ch['year'], y=df_aging_ch['share_pct'],
-        mode='lines+markers', name='CH – Anteil 66+',
+        mode='lines+markers', name='CH: Anteil 66+',
         line=dict(color='#e67e22', width=1.5, dash='dash'), marker=dict(size=5),
         yaxis='y2', hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
     ))
@@ -145,13 +145,13 @@ def _build_sq3_detail(canton: str | None = None) -> go.Figure:
         icc = dff['icc'].iloc[0]
         fig.add_trace(go.Scatter(
             x=dff['year'], y=dff['cost_per_capita'],
-            mode='lines+markers', name=f'{icc} – Kosten pro Kopf',
+            mode='lines+markers', name=f'{icc}: Kosten pro Kopf',
             line=dict(color='#2f4356', width=2.5), marker=dict(size=7),
             yaxis='y1', hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
         ))
         fig.add_trace(go.Scatter(
             x=dff['year'], y=dff['share_pct'],
-            mode='lines+markers', name=f'{icc} – Anteil 66+',
+            mode='lines+markers', name=f'{icc}: Anteil 66+',
             line=dict(color='#e67e22', width=2.5), marker=dict(size=7),
             yaxis='y2', hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
         ))

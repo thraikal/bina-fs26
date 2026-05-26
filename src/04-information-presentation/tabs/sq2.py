@@ -121,7 +121,7 @@ tab = dcc.Tab(
                     "fontSize": "18px", "fontWeight": "700", "color": "#2f4356",
                 }),
                 html.Div(
-                    "Wo passen Prämien und Kosten zusammen – und wo gibt es Auffälligkeiten?",
+                    "Wo passen Prämien und Kosten zusammen und wo gibt es Auffälligkeiten?",
                     style={"fontSize": "12px", "color": "#888", "marginTop": "4px"},
                 ),
             ], style={"marginBottom": "20px"}),
