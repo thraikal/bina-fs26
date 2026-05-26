@@ -9,6 +9,51 @@ _CANTON_OPTIONS = sorted(df_per_person['canton'].unique())
 _BTN_ON = {}
 _BTN_OFF = {"border": "1.5px solid #ccc", "color": "#ccc", "cursor": "default", "pointerEvents": "none"}
 
+
+def _build_sq1_kpis(year: int, canton: str | None = None) -> list:
+    dff = df_per_person[df_per_person['year'] == year]
+
+    def _kpi(title, value, note='', note_color='#666'):
+        return html.Div([
+            html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
+                                   "letterSpacing": "0.05em", "marginBottom": "4px"}),
+            html.Div(value, style={"fontSize": "22px", "fontWeight": "700", "color": "#2f4356"}),
+            html.Div(note, style={"fontSize": "11px", "color": note_color, "marginTop": "2px"}),
+        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                  "padding": "14px 18px", "flex": "1", "minWidth": "140px"})
+
+    if canton:
+        row = dff[dff['canton'] == canton].iloc[0]
+        avg_cost = dff['cost_per_capita'].mean()
+        cost_delta = (row['cost_per_capita'] - avg_cost) / avg_cost * 100
+        rank = int((dff['cost_per_capita'] > row['cost_per_capita']).sum()) + 1
+        first_year_cost = df_per_person.loc[
+            (df_per_person['canton'] == canton) & (df_per_person['year'] == YEARS[0]), 'cost_per_capita'
+        ].iloc[0]
+        growth = (row['cost_per_capita'] - first_year_cost) / first_year_cost * 100
+        return [
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
+            _kpi("Rang nach Kosten", f"{rank} von {len(dff)}", "von teuer nach günstig"),
+            _kpi(f"Wachstum seit {YEARS[0]}",
+                 f"{'+'if growth>=0 else ''}{growth:.1f}%",
+                 f"CHF {first_year_cost:,.0f} → CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
+                 note_color='#c0392b' if growth > 0 else '#27ae60'),
+        ]
+
+    avg_cost = dff['cost_per_capita'].mean()
+    max_row = dff.loc[dff['cost_per_capita'].idxmax()]
+    min_row = dff.loc[dff['cost_per_capita'].idxmin()]
+    return [
+        _kpi("Ø Kosten pro Kopf", f"CHF {avg_cost:,.0f}".replace(',', "'"), f"Schweizer Durchschnitt {year}"),
+        _kpi("Höchste Kosten", max_row['canton'],
+             f"CHF {max_row['cost_per_capita']:,.0f}".replace(',', "'")),
+        _kpi("Tiefste Kosten", min_row['canton'],
+             f"CHF {min_row['cost_per_capita']:,.0f}".replace(',', "'")),
+    ]
+
+
 def _build_sq1_map(year: int):
     dff = df_per_person[df_per_person['year'] == year]
     fig = px.choropleth(
@@ -32,6 +77,7 @@ def _build_sq1_map(year: int):
 
 
 _sq1_initial_figure = _build_sq1_map(YEARS[-1])
+_initial_kpis = _build_sq1_kpis(YEARS[-1])
 
 tab = dcc.Tab(
     label="1. Kostenverteilung", value="sq1", className="tab",
@@ -46,6 +92,8 @@ tab = dcc.Tab(
                     "fontSize": "12px", "color": "#888", "marginTop": "4px",
                 }),
             ], style={"marginBottom": "20px"}),
+            html.Div(id='sq1-kpis', children=_initial_kpis,
+                     style={"display": "flex", "gap": "12px", "marginBottom": "16px"}),
             html.Div([
                 html.Div([
                     html.Label("Jahr:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
@@ -111,9 +159,15 @@ def sq1_step_year(_prev, _next, current_year, trend_click):
     return slider_out, _BTN_OFF if new_year == YEARS[0] else _BTN_ON, _BTN_OFF if new_year == YEARS[-1] else _BTN_ON
 
 
-@callback(Output('sq1-map', 'figure'), Output('sq1-loading-anchor', 'children'), Input('sq1-year-slider', 'value'))
-def sq1_map(year):
-    return _build_sq1_map(year), None
+@callback(
+    Output('sq1-map', 'figure'),
+    Output('sq1-kpis', 'children'),
+    Output('sq1-loading-anchor', 'children'),
+    Input('sq1-year-slider', 'value'),
+    Input('sq1-canton-dropdown', 'value'),
+)
+def sq1_update(year, canton):
+    return _build_sq1_map(year), _build_sq1_kpis(year, canton), None
 
 
 @callback(
