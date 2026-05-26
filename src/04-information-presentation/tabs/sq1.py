@@ -185,13 +185,18 @@ def sq1_reset_click_data(dropdown_value):
 @callback(
     Output('sq1-canton-dropdown', 'value'),
     Input('sq1-map', 'clickData'),
+    Input('sq1-trend', 'clickData'),
     State('sq1-canton-dropdown', 'value'),
     prevent_initial_call=True,
 )
-def sq1_map_click_to_dropdown(click_data, current_value):
-    if not click_data or not click_data['points']:
+def sq1_click_to_dropdown(map_click, trend_click, current_value):
+    from dash import ctx
+    if ctx.triggered_id == 'sq1-map' and map_click and map_click['points']:
+        clicked = map_click['points'][0]['location']
+    elif ctx.triggered_id == 'sq1-trend' and trend_click and trend_click['points']:
+        clicked = trend_click['points'][0]['customdata'][0]
+    else:
         return no_update
-    clicked = click_data['points'][0]['location']
     return None if clicked == current_value else clicked
 
 
@@ -202,13 +207,12 @@ def sq1_map_click_to_dropdown(click_data, current_value):
     Input('sq1-trend', 'hoverData'),
 )
 def sq1_active_canton(map_hover, dropdown_value, trend_hover):
-    if dropdown_value:
-        return dropdown_value
+    hovered = None
     if trend_hover and trend_hover['points']:
-        return trend_hover['points'][0]['customdata'][0]
-    if map_hover and map_hover['points']:
-        return map_hover['points'][0]['location']
-    return None
+        hovered = trend_hover['points'][0]['customdata'][0]
+    elif map_hover and map_hover['points']:
+        hovered = map_hover['points'][0]['location']
+    return {"selected": dropdown_value, "hovered": hovered}
 
 
 @callback(
@@ -216,22 +220,33 @@ def sq1_active_canton(map_hover, dropdown_value, trend_hover):
     Input('sq1-year-slider', 'value'),
     Input('sq1-active-canton', 'data'),
 )
-def sq1_trend(selected_year, highlighted):
+def sq1_trend(selected_year, active):
+    selected = active.get('selected') if active else None
+    hovered = active.get('hovered') if active else None
+    # don't show hovered as a second highlight if it's the same as selected
+    if hovered == selected:
+        hovered = None
+
     fig = px.line(
         df_per_person.sort_values('year'),
         x='year', y='cost_per_capita', color='canton',
         markers=True, custom_data=['canton'],
         labels={'year': 'Jahr', 'cost_per_capita': 'CHF pro Kopf', 'canton': 'Kanton'},
     )
+    any_highlighted = selected or hovered
     for trace in fig.data:
-        if highlighted:
-            if trace.name == highlighted:
+        if any_highlighted:
+            if trace.name == selected:
                 trace.line.width = 3
                 trace.opacity = 1.0
                 trace.showlegend = True
+            elif trace.name == hovered:
+                trace.line.width = 2
+                trace.opacity = 0.75
+                trace.showlegend = bool(selected)  # show label only when comparing
             else:
                 trace.line.width = 1
-                trace.opacity = 0.15
+                trace.opacity = 0.08
                 trace.showlegend = False
         else:
             trace.showlegend = False
