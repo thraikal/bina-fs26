@@ -264,7 +264,7 @@ tab = dcc.Tab(
                 }),
             ], style={"display": "flex", "gap": "16px"}),
 
-        ], style={"maxWidth": "1100px", "margin": "auto", "padding": "24px 32px"}),
+        ], style={"maxWidth": "1100px", "margin": "auto", "padding": "48px 32px 24px 32px"}),
     ],
 )
 
