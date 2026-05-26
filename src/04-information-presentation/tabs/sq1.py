@@ -123,12 +123,22 @@ tab = dcc.Tab(
             html.Div([
                 dcc.Store(id='sq1-active-canton'),
                 html.Div([
+                    html.Div("Kosten pro Kopf nach Kanton", style={
+                        "fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px",
+                    }),
+                    html.Div("Kanton anklicken für Details",
+                             style={"fontSize": "11px", "color": "#aaa", "marginBottom": "8px"}),
                     dcc.Graph(id='sq1-map', figure=_sq1_initial_figure,
                               config={"displayModeBar": False, "scrollZoom": True}, clear_on_unhover=True),
-                ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "1"}),
+                ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "16px", "flex": "1"}),
                 html.Div([
+                    html.Div("Kostenverlauf nach Kanton", style={
+                        "fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px",
+                    }),
+                    html.Div("Kanton anklicken um Verlauf hervorzuheben · Punkt anklicken um Jahr zu wechseln",
+                             style={"fontSize": "11px", "color": "#aaa", "marginBottom": "8px"}),
                     dcc.Graph(id='sq1-trend', config={"displayModeBar": False}, clear_on_unhover=True),
-                ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "1"}),
+                ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "16px", "flex": "1"}),
             ], style={"display": "flex", "gap": "16px"}),
         ], style={"maxWidth": "1100px", "margin": "auto", "padding": "48px 32px 24px 32px"}),
     ],
