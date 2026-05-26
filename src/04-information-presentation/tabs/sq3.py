@@ -247,7 +247,7 @@ tab = dcc.Tab(
                 ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "1"}),
             ], style={"display": "flex", "gap": "16px"}),
             html.Div(id='sq3-detail', style={"marginTop": "16px"}),
-        ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
+        ], style={"maxWidth": "1100px", "margin": "auto", "padding": "24px 32px"}),
     ],
 )
 

@@ -82,7 +82,7 @@ tab = dcc.Tab(
                     dcc.Graph(id='sq1-trend', config={"displayModeBar": False}, clear_on_unhover=True),
                 ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "1"}),
             ], style={"display": "flex", "gap": "16px"}),
-        ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
+        ], style={"maxWidth": "1100px", "margin": "auto", "padding": "24px 32px"}),
     ],
 )
 
