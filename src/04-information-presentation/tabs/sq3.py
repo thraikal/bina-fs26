@@ -195,7 +195,7 @@ _initial_map = _build_sq3_map(SQ3_YEARS[-1])
 _initial_kpis = _build_sq3_kpis(SQ3_YEARS[-1])
 
 tab = dcc.Tab(
-    label="3. Alterung & Kosten", value="sq3", className="tab",
+    label="3. Demografischer Druck", value="sq3", className="tab",
     style=TAB_STYLE, selected_style=TAB_SELECTED,
     children=[
         html.Div([

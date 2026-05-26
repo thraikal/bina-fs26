@@ -189,7 +189,7 @@ _initial_gap_bar = _build_gap_bar(SQ2_YEARS[-1])
 _initial_kpis = _build_kpis(SQ2_YEARS[-1])
 
 tab = dcc.Tab(
-    label="2. Prämien & Kosten", value="sq2", className="tab",
+    label="2. Prämienbelastung", value="sq2", className="tab",
     style=TAB_STYLE, selected_style=TAB_SELECTED,
     children=[
         html.Div([

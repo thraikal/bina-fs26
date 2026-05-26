@@ -34,7 +34,7 @@ def _build_sq1_map(year: int):
 _sq1_initial_figure = _build_sq1_map(YEARS[-1])
 
 tab = dcc.Tab(
-    label="1. Kosten pro Kopf", value="sq1", className="tab",
+    label="1. Kostenverteilung", value="sq1", className="tab",
     style=TAB_STYLE, selected_style=TAB_SELECTED,
     children=[
         html.Div([
@@ -118,11 +118,14 @@ def sq1_map(year):
 
 @callback(
     Output('sq1-map', 'clickData'),
+    Output('sq1-trend', 'clickData'),
     Input('sq1-canton-dropdown', 'value'),
     prevent_initial_call=True,
 )
 def sq1_reset_click_data(dropdown_value):
-    return None if dropdown_value is None else no_update
+    if dropdown_value is None:
+        return None, None
+    return no_update, no_update
 
 
 @callback(
