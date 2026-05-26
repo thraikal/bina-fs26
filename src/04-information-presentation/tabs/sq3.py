@@ -106,25 +106,44 @@ def _build_sq3_map(year: int) -> go.Figure:
     return fig
 
 
-def _build_sq3_kpis(year: int) -> list:
+def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
     dff = df_aging[df_aging['year'] == year]
-    avg_share = dff['share_pct'].mean()
-    top = dff.loc[dff['share_pct'].idxmax()]
-    r = np.corrcoef(dff['share_pct'].values, dff['cost_per_capita'].values)[0, 1]
 
-    def _kpi(title, value, note=''):
+    def _kpi(title, value, note='', note_color='#aaa'):
         return html.Div([
             html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
                                    "letterSpacing": "0.05em", "marginBottom": "4px"}),
             html.Div(value, style={"fontSize": "22px", "fontWeight": "700", "color": "#2f4356"}),
-            html.Div(note, style={"fontSize": "11px", "color": "#aaa", "marginTop": "2px"}),
+            html.Div(note, style={"fontSize": "11px", "color": note_color, "marginTop": "2px"}),
         ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                   "padding": "14px 18px", "flex": "1", "minWidth": "140px"})
 
+    if canton:
+        row = dff[dff['canton'] == canton].iloc[0]
+        avg_cost = dff['cost_per_capita'].mean()
+        avg_share = dff['share_pct'].mean()
+        cost_delta = (row['cost_per_capita'] - avg_cost) / avg_cost * 100
+        share_delta = row['share_pct'] - avg_share
+        rank = int((dff['cost_per_capita'] > row['cost_per_capita']).sum()) + 1
+        return [
+            _kpi("Anteil 66+", f"{row['share_pct']:.1f}%",
+                 f"{'+'if share_delta>=0 else ''}{share_delta:.1f}% vs. CH-Schnitt",
+                 note_color='#e67e22' if share_delta > 0 else '#2980b9'),
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}",
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
+            _kpi("Rang nach Kosten", f"{rank} von {len(dff)}", "von teuer nach günstig"),
+        ]
+
+    avg_share = dff['share_pct'].mean()
+    top_cost = dff.loc[dff['cost_per_capita'].idxmax()]
+    top_age = dff.loc[dff['share_pct'].idxmax()]
     return [
         _kpi("Ø Anteil 66+", f"{avg_share:.1f}%", "alle Kantone"),
-        _kpi("Höchster 66+-Anteil", top['icc'], f"{top['share_pct']:.1f}% · {top['canton']}"),
-        _kpi("Korrelation r", f"{r:.2f}", "Alterung ↔ Kosten/Kopf"),
+        _kpi("Höchste Kosten", top_cost['icc'],
+             f"CHF {top_cost['cost_per_capita']:,.0f} · {top_cost['canton']}"),
+        _kpi("Höchster 66+-Anteil", top_age['icc'],
+             f"{top_age['share_pct']:.1f}% · {top_age['canton']}"),
     ]
 
 
@@ -227,7 +246,6 @@ tab = dcc.Tab(
                     dcc.Graph(id='sq3-map', figure=_initial_map, config={"displayModeBar": False}),
                 ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "1"}),
             ], style={"display": "flex", "gap": "16px"}),
-            dcc.Store(id='sq3-selected-canton'),
             html.Div(id='sq3-detail', style={"marginTop": "16px"}),
         ], style={"maxWidth": "1000px", "margin": "auto", "padding": "24px 32px"}),
     ],
@@ -259,10 +277,22 @@ def sq3_step_year(_prev, _next, current_year):
     Output('sq3-kpis', 'children'),
     Output('sq3-loading-anchor', 'children'),
     Input('sq3-year-slider', 'value'),
-    Input('sq3-selected-canton', 'data'),
+    Input('sq3-canton-dropdown', 'value'),
 )
 def sq3_charts(year, selected_canton):
-    return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year), None
+    return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year, selected_canton), None
+
+
+@callback(
+    Output('sq3-map', 'clickData'),
+    Output('sq3-scatter', 'clickData'),
+    Input('sq3-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq3_reset_click_data(dropdown_value):
+    if dropdown_value is None:
+        return None, None
+    return no_update, no_update
 
 
 @callback(
@@ -284,15 +314,7 @@ def sq3_click_to_dropdown(scatter_click, map_click, current_value):
     return None if clicked == current_value else clicked
 
 
-@callback(
-    Output('sq3-selected-canton', 'data'),
-    Input('sq3-canton-dropdown', 'value'),
-)
-def sq3_select_canton(dropdown_value):
-    return dropdown_value
-
-
-@callback(Output('sq3-detail', 'children'), Input('sq3-selected-canton', 'data'))
+@callback(Output('sq3-detail', 'children'), Input('sq3-canton-dropdown', 'value'))
 def sq3_detail_chart(canton):
     if canton:
         icc = df_aging.loc[df_aging['canton'] == canton, 'icc'].iloc[0]
