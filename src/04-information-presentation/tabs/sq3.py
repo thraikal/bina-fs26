@@ -31,9 +31,6 @@ def _build_sq3_scatter(year: int, selected_canton: str | None = None) -> go.Figu
     dff['quadrant'] = _sq3_quadrant(dff)
 
     x, y = dff['share_pct'].values, dff['cost_per_capita'].values
-    slope, intercept = np.polyfit(x, y, 1)
-    y_pred = slope * x + intercept
-    r2 = 1 - np.sum((y - y_pred) ** 2) / np.sum((y - y.mean()) ** 2)
     avg_x, avg_y = x.mean(), y.mean()
 
     fig = go.Figure()
@@ -52,11 +49,6 @@ def _build_sq3_scatter(year: int, selected_canton: str | None = None) -> go.Figu
                 hovertemplate='%{customdata}: %{x:.1f}% · CHF %{y:,.0f}<extra></extra>',
             ))
 
-    fig.add_trace(go.Scatter(
-        x=[x.min(), x.max()], y=[slope * x.min() + intercept, slope * x.max() + intercept],
-        mode='lines', line=dict(color='#999', width=1.5, dash='dash'),
-        name=f'Regression (R² = {r2:.2f})', hoverinfo='skip',
-    ))
     fig.add_vline(x=avg_x, line_dash='dot', line_color='#ccc', line_width=1)
     fig.add_hline(y=avg_y, line_dash='dot', line_color='#ccc', line_width=1)
 
@@ -78,12 +70,6 @@ def _build_sq3_scatter(year: int, selected_canton: str | None = None) -> go.Figu
         xaxis=dict(title='Anteil Bevölkerung 66+ (%)', gridcolor='#f0f0f0', zeroline=False),
         yaxis=dict(title='Gesundheitskosten pro Kopf (CHF)', gridcolor='#f0f0f0', zeroline=False),
         legend=dict(orientation='h', x=0, y=-0.18, xanchor='left', bgcolor='rgba(0,0,0,0)'),
-        annotations=[dict(
-            x=0.99, y=0.99, xref='paper', yref='paper', text=f'R² = {r2:.2f}',
-            showarrow=False, xanchor='right', yanchor='top',
-            bgcolor='rgba(255,255,255,0.85)', bordercolor='#ddd', borderwidth=1,
-            font=dict(size=13, color='#333'),
-        )],
     )
     return fig
 
@@ -128,7 +114,7 @@ def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
         return [
             _kpi("Anteil 66+", f"{row['share_pct']:.1f}%",
                  f"{'+'if share_delta>=0 else ''}{share_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
-                 note_color='#e67e22' if share_delta > 0 else '#2980b9'),
+                 note_color='#c0392b' if share_delta > 0 else '#27ae60'),
             _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
                  f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
@@ -140,52 +126,61 @@ def _build_sq3_kpis(year: int, canton: str | None = None) -> list:
     top_age = dff.loc[dff['share_pct'].idxmax()]
     return [
         _kpi("Ø Anteil 66+", f"{avg_share:.1f}%", "alle Kantone"),
-        _kpi("Höchste Kosten", top_cost['icc'],
-             f"CHF {top_cost['cost_per_capita']:,.0f}".replace(',', "'") + f" · {top_cost['canton']}"),
-        _kpi("Höchster 66+-Anteil", top_age['icc'],
-             f"{top_age['share_pct']:.1f}% · {top_age['canton']}"),
+        _kpi("Höchste Kosten", top_cost['canton'],
+             f"CHF {top_cost['cost_per_capita']:,.0f}".replace(',', "'")),
+        _kpi("Höchster 66+-Anteil", top_age['canton'],
+             f"{top_age['share_pct']:.1f}%"),
     ]
 
 
 def _build_sq3_detail(canton: str | None = None) -> go.Figure:
+    base_year = int(df_aging_ch['year'].min())
+
+    def _rebase(series, base_val):
+        return (series / base_val * 100) if base_val else series
+
+    ch_base_cost = df_aging_ch.loc[df_aging_ch['year'] == base_year, 'cost_per_capita'].iloc[0]
+    ch_base_share = df_aging_ch.loc[df_aging_ch['year'] == base_year, 'share_pct'].iloc[0]
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=df_aging_ch['year'], y=df_aging_ch['cost_per_capita'],
+        x=df_aging_ch['year'], y=_rebase(df_aging_ch['cost_per_capita'], ch_base_cost),
         mode='lines+markers', name='CH: Kosten pro Kopf',
         line=dict(color='#2f4356', width=1.5, dash='dash'), marker=dict(size=5),
-        yaxis='y1', hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
+        hovertemplate='%{x}: %{y:.1f}<extra></extra>',
     ))
     fig.add_trace(go.Scatter(
-        x=df_aging_ch['year'], y=df_aging_ch['share_pct'],
+        x=df_aging_ch['year'], y=_rebase(df_aging_ch['share_pct'], ch_base_share),
         mode='lines+markers', name='CH: Anteil 66+',
-        line=dict(color='#e67e22', width=1.5, dash='dash'), marker=dict(size=5),
-        yaxis='y2', hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
+        line=dict(color='#8e44ad', width=1.5, dash='dash'), marker=dict(size=5),
+        hovertemplate='%{x}: %{y:.1f}<extra></extra>',
     ))
+
     if canton:
         dff = df_aging[df_aging['canton'] == canton].sort_values('year')
         icc = dff['icc'].iloc[0]
+        canton_base_cost = dff.loc[dff['year'] == base_year, 'cost_per_capita'].iloc[0]
+        canton_base_share = dff.loc[dff['year'] == base_year, 'share_pct'].iloc[0]
         fig.add_trace(go.Scatter(
-            x=dff['year'], y=dff['cost_per_capita'],
+            x=dff['year'], y=_rebase(dff['cost_per_capita'], canton_base_cost),
             mode='lines+markers', name=f'{icc}: Kosten pro Kopf',
             line=dict(color='#2f4356', width=2.5), marker=dict(size=7),
-            yaxis='y1', hovertemplate='%{x}: CHF %{y:,.0f}<extra></extra>',
+            hovertemplate='%{x}: %{y:.1f}<extra></extra>',
         ))
         fig.add_trace(go.Scatter(
-            x=dff['year'], y=dff['share_pct'],
+            x=dff['year'], y=_rebase(dff['share_pct'], canton_base_share),
             mode='lines+markers', name=f'{icc}: Anteil 66+',
-            line=dict(color='#e67e22', width=2.5), marker=dict(size=7),
-            yaxis='y2', hovertemplate='%{x}: %{y:.1f}%<extra></extra>',
+            line=dict(color='#8e44ad', width=2.5), marker=dict(size=7),
+            hovertemplate='%{x}: %{y:.1f}<extra></extra>',
         ))
+
+    fig.add_hline(y=100, line_dash='dot', line_color='#ddd', line_width=1)
     fig.update_layout(
-        height=260, margin=dict(l=60, t=12, b=40, r=60),
+        height=280, margin=dict(l=60, t=12, b=40, r=20),
         paper_bgcolor='white', plot_bgcolor='white', font=dict(size=12, color='#888'),
         xaxis=dict(gridcolor='#f0f0f0', zeroline=False, dtick=1),
-        yaxis=dict(title=dict(text='CHF pro Kopf', font=dict(color='#2f4356')),
-                   tickfont=dict(color='#2f4356'), gridcolor='#f0f0f0', zeroline=False),
-        yaxis2=dict(title=dict(text='Anteil 66+ (%)', font=dict(color='#e67e22')),
-                    tickfont=dict(color='#e67e22'), overlaying='y', side='right',
-                    zeroline=False, showgrid=False),
-        legend=dict(orientation='h', x=0, y=-0.2, xanchor='left', bgcolor='rgba(0,0,0,0)'),
+        yaxis=dict(title=f'Index ({base_year} = 100)', gridcolor='#f0f0f0', zeroline=False),
+        legend=dict(orientation='h', x=0, y=-0.22, xanchor='left', bgcolor='rgba(0,0,0,0)'),
     )
     return fig
 
@@ -237,7 +232,7 @@ tab = dcc.Tab(
                 html.Div([
                     html.H3("Korrelation: Bevölkerungsalterung & Kosten pro Kopf",
                             style={"margin": "0 0 2px", "fontSize": "13px", "color": "#555"}),
-                    html.P("Gestrichelte Linie = Regressionsgerade · Kreuzlinien = Schweizer Durchschnitt",
+                    html.P("Kreuzlinien = Schweizer Durchschnitt",
                            style={"fontSize": "11px", "color": "#bbb", "margin": "0 0 8px"}),
                     dcc.Graph(id='sq3-scatter', figure=_initial_scatter, config={"displayModeBar": False}),
                 ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px", "flex": "2"}),
@@ -317,14 +312,17 @@ def sq3_click_to_dropdown(scatter_click, map_click, current_value):
 
 @callback(Output('sq3-detail', 'children'), Input('sq3-canton-dropdown', 'value'))
 def sq3_detail_chart(canton):
+    base_year = int(df_aging['year'].min())
     if canton:
         icc = df_aging.loc[df_aging['canton'] == canton, 'icc'].iloc[0]
-        title = f"Entwicklung {canton} ({icc}) vs. Schweiz"
+        title = f"Relativer Anstieg seit {base_year}: {canton} ({icc}) im Vergleich zur Schweiz"
     else:
-        title = "Entwicklung Schweiz (Gesamtschweiz)"
+        title = f"Relativer Anstieg seit {base_year}: Schweiz"
     return [
         html.Div([
-            html.H3(title, style={"margin": "0 0 8px", "fontSize": "13px", "color": "#555"}),
+            html.H3(title, style={"margin": "0 0 2px", "fontSize": "13px", "color": "#555"}),
+            html.P(f"Kosten pro Kopf und Anteil 66+ mit {base_year} als Ausgangspunkt",
+                   style={"fontSize": "11px", "color": "#bbb", "margin": "0 0 8px"}),
             dcc.Graph(figure=_build_sq3_detail(canton), config={"displayModeBar": False}),
         ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px", "padding": "12px"}),
     ]
