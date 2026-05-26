@@ -1,9 +1,11 @@
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import dcc, html, callback, Output, Input, no_update
+from dash import dcc, html, callback, Output, Input, State, no_update
 
 from data import cantons, df_aging, df_aging_ch, SQ3_YEARS
+
+_SQ3_CANTON_OPTIONS = sorted(df_aging['canton'].unique())
 from styles import BORDER, CARD_BG, TAB_STYLE, TAB_SELECTED, year_slider
 
 _QUADRANT_COLORS = {
@@ -194,9 +196,24 @@ tab = dcc.Tab(
                     html.Div(year_slider("sq3-year-slider", SQ3_YEARS), style={"flex": "1"}),
                     html.Button("‹", id='sq3-year-prev', n_clicks=0, className='year-step-btn'),
                     html.Button("›", id='sq3-year-next', n_clicks=0, className='year-step-btn'),
-                ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "position": "relative", "zIndex": 2}),
+                html.Div([
+                    html.Label("Kanton:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
+                    dcc.Dropdown(
+                        id='sq3-canton-dropdown',
+                        options=[{"label": c, "value": c} for c in _SQ3_CANTON_OPTIONS],
+                        value=None,
+                        clearable=True,
+                        placeholder="Alle Kantone",
+                        style={"flex": "1", "fontSize": "13px"},
+                    ),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "marginTop": "10px"}),
             ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
-                      "padding": "16px 20px", "marginBottom": "16px"}),
+                      "padding": "16px 20px", "marginBottom": "8px"}),
+            html.Div(
+                dcc.Loading(type='circle', color='#d8232a', children=html.Div(id='sq3-loading-anchor')),
+                style={"height": "8px", "marginBottom": "8px", "display": "flex", "justifyContent": "center"},
+            ),
             html.Div([
                 html.Div([
                     html.H3("Korrelation: Bevölkerungsalterung & Kosten pro Kopf",
@@ -240,26 +257,39 @@ def sq3_step_year(_prev, _next, current_year):
     Output('sq3-scatter', 'figure'),
     Output('sq3-map', 'figure'),
     Output('sq3-kpis', 'children'),
+    Output('sq3-loading-anchor', 'children'),
     Input('sq3-year-slider', 'value'),
     Input('sq3-selected-canton', 'data'),
 )
 def sq3_charts(year, selected_canton):
-    return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year)
+    return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year), None
+
+
+@callback(
+    Output('sq3-canton-dropdown', 'value'),
+    Input('sq3-scatter', 'clickData'),
+    Input('sq3-map', 'clickData'),
+    State('sq3-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq3_click_to_dropdown(scatter_click, map_click, current_value):
+    from dash import ctx
+    clicked = None
+    if ctx.triggered_id == 'sq3-scatter' and scatter_click:
+        clicked = scatter_click['points'][0]['customdata'][0]
+    elif ctx.triggered_id == 'sq3-map' and map_click:
+        clicked = map_click['points'][0]['location']
+    if clicked is None:
+        return no_update
+    return None if clicked == current_value else clicked
 
 
 @callback(
     Output('sq3-selected-canton', 'data'),
-    Input('sq3-scatter', 'clickData'),
-    Input('sq3-map', 'clickData'),
-    prevent_initial_call=True,
+    Input('sq3-canton-dropdown', 'value'),
 )
-def sq3_select_canton(scatter_click, map_click):
-    from dash import ctx
-    if ctx.triggered_id == 'sq3-scatter' and scatter_click:
-        return scatter_click['points'][0]['customdata'][0]
-    if ctx.triggered_id == 'sq3-map' and map_click:
-        return map_click['points'][0]['location']
-    return no_update
+def sq3_select_canton(dropdown_value):
+    return dropdown_value
 
 
 @callback(Output('sq3-detail', 'children'), Input('sq3-selected-canton', 'data'))
