@@ -289,6 +289,18 @@ def sq2_step_year(_prev, _next, current_year):
 
 
 @callback(
+    Output('sq2-scatter', 'clickData'),
+    Output('sq2-gap-bar', 'clickData'),
+    Input('sq2-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq2_reset_click_data(dropdown_value):
+    if dropdown_value is None:
+        return None, None
+    return no_update, no_update
+
+
+@callback(
     Output('sq2-canton-dropdown', 'value'),
     Input('sq2-scatter', 'clickData'),
     Input('sq2-gap-bar', 'clickData'),

@@ -97,7 +97,7 @@ def _build_sq3_map(year: int) -> go.Figure:
         color_continuous_scale='Oranges',
         labels={'share_pct': '% 66+', 'cost_per_capita': 'CHF/Kopf'},
     )
-    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_geos(fitbounds='locations', visible=False, projection_type='mercator')
     fig.update_coloraxes(colorbar=dict(
         orientation='h', x=0.5, y=1.01, xanchor='center', yanchor='bottom',
         thickness=10, len=0.7, title_text='Anteil 66+ (%)', title_side='top',
@@ -281,6 +281,7 @@ def sq3_step_year(_prev, _next, current_year):
 )
 def sq3_charts(year, selected_canton):
     return _build_sq3_scatter(year, selected_canton), _build_sq3_map(year), _build_sq3_kpis(year, selected_canton), None
+
 
 
 @callback(
