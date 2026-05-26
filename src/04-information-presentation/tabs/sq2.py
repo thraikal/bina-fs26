@@ -212,7 +212,7 @@ tab = dcc.Tab(
                     html.Div(year_slider("sq2-year-slider", SQ2_YEARS), style={"flex": "1"}),
                     html.Button("‹", id='sq2-year-prev', n_clicks=0, className='year-step-btn'),
                     html.Button("›", id='sq2-year-next', n_clicks=0, className='year-step-btn'),
-                ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "position": "relative", "zIndex": 2}),
                 html.Div([
                     html.Label("Kanton:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
                     dcc.Dropdown(
