@@ -112,6 +112,12 @@ tab = dcc.Tab(
                 ),
             ], style={"marginBottom": "20px"}),
 
+            html.Div([
+                _kpi_card("factor-cost",    f"CHF {_avg_cost / 12:,.0f}".replace(',', "'") + " / Monat", "Ø Gesundheitskosten pro Kopf"),
+                _kpi_card("factor-premium", f"CHF {_avg_premium:,.0f} / Monat", "Ø Median-Basisprämie aller Kantone"),
+                _kpi_card("factor-age",     f"{_avg_age_share:.1%}", "Ø Bevölkerungsanteil 66+ (Schweiz)"),
+            ], style={"display": "flex", "gap": "16px", "marginBottom": "16px"}),
+
             # Belastungsindex entry card
             html.Div([
                 html.Div("Was ist der Belastungsindex?", style={
@@ -132,13 +138,6 @@ tab = dcc.Tab(
                 "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                 "padding": "20px 24px", "marginBottom": "12px",
             }),
-
-            # KPI cards
-            html.Div([
-                _kpi_card("factor-cost",    f"CHF {_avg_cost:,.0f}",          "Ø Gesundheitskosten pro Kopf"),
-                _kpi_card("factor-age",     f"{_avg_age_share:.1%}",           "Ø Bevölkerungsanteil 66+"),
-                _kpi_card("factor-premium", f"CHF {_avg_premium:,.0f} / Mt.",  "Ø Median-Basisprämie"),
-            ], style={"display": "flex", "gap": "16px", "marginBottom": "16px"}),
 
             # Map + priority table
             html.Div([
