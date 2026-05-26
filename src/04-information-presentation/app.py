@@ -94,16 +94,18 @@ app.layout = [
     ),
 ]
 
+
 @app.callback(
     Output("tabs", "value"),
-    Input("kpi-cost", "n_clicks"),
-    Input("kpi-premium", "n_clicks"),
-    Input("kpi-age", "n_clicks"),
+    Input("factor-cost",    "n_clicks"),
+    Input("factor-age",     "n_clicks"),
+    Input("factor-premium", "n_clicks"),
     Input("overview-priority-table", "n_clicks"),
     prevent_initial_call=True,
 )
-def _navigate_from_kpi(_c, _pr, _a, _t):
-    return {"kpi-cost": "sq1", "kpi-premium": "sq2", "kpi-age": "sq3", "overview-priority-table": "sq4"}.get(ctx.triggered_id, "overview")
+def _navigate_from_overview(*_):
+    return {"factor-cost": "sq1", "factor-age": "sq3", "factor-premium": "sq2",
+            "overview-priority-table": "sq4"}.get(ctx.triggered_id, "overview")
 
 
 if __name__ == '__main__':
