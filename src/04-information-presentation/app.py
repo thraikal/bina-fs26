@@ -99,10 +99,11 @@ app.layout = [
     Input("kpi-cost", "n_clicks"),
     Input("kpi-age", "n_clicks"),
     Input("kpi-priority", "n_clicks"),
+    Input("overview-priority-table", "n_clicks"),
     prevent_initial_call=True,
 )
-def _navigate_from_kpi(_c, _a, _p):
-    return {"kpi-cost": "sq1", "kpi-age": "sq3", "kpi-priority": "sq4"}.get(ctx.triggered_id, "overview")
+def _navigate_from_kpi(_c, _a, _p, _t):
+    return {"kpi-cost": "sq1", "kpi-age": "sq3", "kpi-priority": "sq4", "overview-priority-table": "sq4"}.get(ctx.triggered_id, "overview")
 
 
 if __name__ == '__main__':

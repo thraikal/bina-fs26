@@ -94,12 +94,11 @@ def _priority_rows():
                 "padding": "7px 8px", "fontSize": "13px", "textAlign": "right", "fontWeight": "600",
             }),
             html.Td(
-                f"+{delta:.2f}" if delta >= 0 else f"{delta:.2f}",
-                style={
-                    "padding": "7px 8px", "fontSize": "13px", "textAlign": "right",
-                    "color": "#d8232a" if delta > 0.01 else ("#2a8a4a" if delta < -0.01 else "#888"),
-                },
-            ),
+                f"+{delta:.2f}" if delta > 0.01 else (f"-{abs(delta):.2f}" if delta < -0.01 else f"{delta:.2f}"),
+            style={
+                "padding": "7px 8px", "fontSize": "13px", "textAlign": "right",
+                "color": "#d8232a" if delta > 0.01 else ("#2a8a4a" if delta < -0.01 else "#888"),
+            }),
             html.Td(
                 html.Span("Prioritär", style={
                     "background": "#d8232a" if is_priority else "#ccc",
@@ -196,26 +195,30 @@ tab = dcc.Tab(
 
                     # Priority table
                     html.Div([
-                        html.Div("Top 5 Kantone: Prognose 2030", style={
-                            "fontSize": "13px", "fontWeight": "700", "color": "#2f4356", "marginBottom": "10px",
-                        }),
+                        html.Div([
+                            html.Div("Höchste Belastung 2030", style={
+                                "fontSize": "13px", "fontWeight": "700", "color": "#2f4356",
+                            }),
+                            html.Div("Sortiert nach erwartetem Belastungsindex 2030", style={
+                                "fontSize": "11px", "color": "#aaa", "marginTop": "2px", "marginBottom": "10px",
+                            }),
+                        ]),
                         html.Table([
                             html.Thead(html.Tr([
                                 html.Th("Kanton", style={**_TH, "textAlign": "left"}),
                                 html.Th(f"{_latest_year}", style={**_TH, "textAlign": "right"}),
                                 html.Th("2030", style={**_TH, "textAlign": "right"}),
-                                html.Th("Δ", style={**_TH, "textAlign": "right"}),
+                                html.Th("Trend", style={**_TH, "textAlign": "right"}),
                                 html.Th("", style=_TH),
                             ])),
                             html.Tbody(_priority_rows()),
                         ], style={"width": "100%", "borderCollapse": "collapse"}),
-                        html.Div(
-                            f"Δ = Veränderung des Belastungsindex von {_latest_year} bis 2030 basierend auf dem bisherigen Trend",
-                            style={"fontSize": "10px", "color": "#bbb", "marginTop": "10px"},
-                        ),
-                    ], style={
+                        html.Div("Detail ansehen →", className="kpi-hint", style={
+                            "fontSize": "10px", "color": "#d8232a", "marginTop": "10px", "fontWeight": "600",
+                        }),
+                    ], id="overview-priority-table", n_clicks=0, className="kpi-card-link", style={
                         "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
-                        "padding": "16px", "flex": "1",
+                        "padding": "16px", "flex": "1", "cursor": "pointer",
                     }),
                 ], style={"flex": "2", "display": "flex", "flexDirection": "column", "gap": "0"}),
             ], style={"display": "flex", "gap": "16px"}),
