@@ -22,7 +22,7 @@ def _build_sq1_map(year: int):
         color_continuous_scale='Reds',
         labels={'cost_per_capita': 'CHF pro Kopf'},
     )
-    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_geos(fitbounds='locations', visible=False, projection_type='mercator')
     fig.update_coloraxes(colorbar=dict(
         orientation='h', x=0.5, y=1.01, xanchor='center', yanchor='bottom',
         thickness=10, len=0.7, title_text='CHF pro Kopf', title_side='top',

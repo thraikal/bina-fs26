@@ -69,13 +69,16 @@ def _build_belastung_map():
             'premium_median_monthly': 'Median-Prämie (CHF/Mt.)',
         },
     )
-    fig.update_geos(fitbounds='locations', visible=False)
+    fig.update_geos(
+        visible=False, projection_type='mercator',
+        lonaxis_range=[4.8, 11.8], lataxis_range=[45.5, 48.1],
+    )
     fig.update_coloraxes(colorbar=dict(
         orientation='h', x=0.5, y=1.01, xanchor='center', yanchor='bottom',
         thickness=10, len=0.7, title_text='Belastungsindex', title_side='top',
     ))
     fig.update_layout(
-        margin=dict(l=0, r=0, t=48, b=0), height=420,
+        margin=dict(l=0, r=0, t=48, b=0), autosize=True,
         font=dict(size=12, color='#888'),
     )
     return fig
@@ -164,7 +167,11 @@ tab = dcc.Tab(
                         f"Kantonaler Belastungsindex {_latest_year}",
                         style={"fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px"},
                     ),
-                    dcc.Graph(figure=_build_belastung_map(), config={"displayModeBar": False}),
+                    html.Div(
+                        dcc.Graph(figure=_build_belastung_map(), config={"displayModeBar": False},
+                                  responsive=True, style={"height": "100%"}),
+                        style={"width": "100%", "aspectRatio": "1.6 / 1"},
+                    ),
                 ], style={
                     "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                     "padding": "16px", "flex": "3",
