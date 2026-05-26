@@ -100,12 +100,18 @@ app.layout = [
     Input("factor-cost",    "n_clicks"),
     Input("factor-age",     "n_clicks"),
     Input("factor-premium", "n_clicks"),
+    Input("link-cost",      "n_clicks"),
+    Input("link-age",       "n_clicks"),
+    Input("link-premium",   "n_clicks"),
     Input("overview-priority-table", "n_clicks"),
     prevent_initial_call=True,
 )
 def _navigate_from_overview(*_):
-    return {"factor-cost": "sq1", "factor-age": "sq3", "factor-premium": "sq2",
-            "overview-priority-table": "sq4"}.get(ctx.triggered_id, "overview")
+    return {
+        "factor-cost": "sq1", "factor-age": "sq3", "factor-premium": "sq2",
+        "link-cost":   "sq1", "link-age":   "sq3", "link-premium":   "sq2",
+        "overview-priority-table": "sq4",
+    }.get(ctx.triggered_id, "overview")
 
 
 if __name__ == '__main__':

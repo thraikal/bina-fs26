@@ -130,9 +130,27 @@ tab = dcc.Tab(
                     style={"fontSize": "12px", "color": "#555", "lineHeight": "1.6", "marginBottom": "10px"},
                 ),
                 html.Ul([
-                    html.Li("Gesundheitskosten pro Kopf (45%)", style={"marginBottom": "4px"}),
-                    html.Li("Bevölkerungsanteil 66+ (30%)", style={"marginBottom": "4px"}),
-                    html.Li("Median-Basisprämie (25%)"),
+                    html.Li([
+                        "Gesundheitskosten pro Kopf (45%)",
+                        html.Span("Detail ansehen →", id="link-cost", n_clicks=0, style={
+                            "color": "#d8232a", "fontSize": "10px", "fontWeight": "600",
+                            "marginLeft": "8px", "cursor": "pointer",
+                        }),
+                    ], style={"marginBottom": "4px"}),
+                    html.Li([
+                        "Median-Basisprämie (25%)",
+                        html.Span("Detail ansehen →", id="link-premium", n_clicks=0, style={
+                            "color": "#d8232a", "fontSize": "10px", "fontWeight": "600",
+                            "marginLeft": "8px", "cursor": "pointer",
+                        }),
+                    ], style={"marginBottom": "4px"}),
+                    html.Li([
+                        "Bevölkerungsanteil 66+ (30%)",
+                        html.Span("Detail ansehen →", id="link-age", n_clicks=0, style={
+                            "color": "#d8232a", "fontSize": "10px", "fontWeight": "600",
+                            "marginLeft": "8px", "cursor": "pointer",
+                        }),
+                    ]),
                 ], style={"fontSize": "12px", "color": "#555", "lineHeight": "1.6", "margin": "0", "paddingLeft": "20px"}),
             ], style={
                 "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
