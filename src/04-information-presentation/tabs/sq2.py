@@ -1,6 +1,7 @@
 import numpy as np
 import plotly.express as px
-from dash import dcc, html, callback, Output, Input, no_update
+import plotly.graph_objects as go
+from dash import dcc, html, callback, Output, Input, State, no_update
 
 from data import df_analysis_panel
 from styles import BORDER, CARD_BG, TAB_STYLE, TAB_SELECTED, year_slider
@@ -9,6 +10,7 @@ _BTN_ON = {}
 _BTN_OFF = {"border": "1.5px solid #ccc", "color": "#ccc", "cursor": "default", "pointerEvents": "none"}
 
 SQ2_YEARS = sorted(df_analysis_panel['year'].unique().tolist())
+_CANTON_OPTIONS = sorted(df_analysis_panel['canton_label'].unique().tolist())
 
 
 def _enrich(year: int):
@@ -23,7 +25,52 @@ def _enrich(year: int):
     return dff
 
 
-def _build_scatter(year: int):
+def _build_kpis(year: int, canton: str | None = None) -> list:
+    dff = _enrich(year)
+
+    def _kpi(title, value, note='', note_color='#aaa'):
+        return html.Div([
+            html.Div(title, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
+                                   "letterSpacing": "0.05em", "marginBottom": "4px"}),
+            html.Div(value, style={"fontSize": "22px", "fontWeight": "700", "color": "#2f4356"}),
+            html.Div(note, style={"fontSize": "11px", "color": note_color, "marginTop": "2px"}),
+        ], style={"background": CARD_BG, "border": BORDER, "borderRadius": "8px",
+                  "padding": "14px 18px", "flex": "1", "minWidth": "140px"})
+
+    if canton:
+        row = dff[dff['canton_label'] == canton].iloc[0]
+        avg_cost = dff['cost_per_capita'].mean()
+        avg_premium = dff['premium_median_monthly'].mean()
+        cost_delta = (row['cost_per_capita'] - avg_cost) / avg_cost * 100
+        premium_delta = (row['premium_median_monthly'] - avg_premium) / avg_premium * 100
+        gap = row['gap']
+        direction = 'über' if gap > 0 else 'unter'
+        return [
+            _kpi("Prämien-Kosten-Gap", f"{gap:+.2f}",
+                 f"Prämien {direction} Kostenprofil",
+                 note_color='#d8232a' if gap > 0 else '#2f4356'),
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}",
+                 f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% vs. CH-Schnitt",
+                 note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
+            _kpi("Median-Basisprämie", f"CHF {row['premium_median_monthly']:,.0f}/Mt.",
+                 f"{'+'if premium_delta>=0 else ''}{premium_delta:.1f}% vs. CH-Schnitt",
+                 note_color='#c0392b' if premium_delta > 0 else '#27ae60'),
+        ]
+
+    r = dff['cost_per_capita'].corr(dff['premium_median_monthly'])
+    outliers = int((dff['gap'].abs() > 1).sum())
+    max_row = dff.loc[dff['gap'].abs().idxmax()]
+    direction = 'über' if max_row['gap'] > 0 else 'unter'
+    return [
+        _kpi("Korrelation Prämie ↔ Kosten", f"r = {r:.2f}", f"Pearson, alle Kantone {year}"),
+        _kpi("Auffällige Kantone", f"{outliers} von {len(dff)}", "|Gap| > 1 Standardabweichung"),
+        _kpi("Grösste Auffälligkeit", max_row['canton_code'],
+             f"Prämien {direction} Kostenprofil · Gap {max_row['gap']:+.2f}",
+             note_color='#d8232a' if max_row['gap'] > 0 else '#2f4356'),
+    ]
+
+
+def _build_scatter(year: int, canton: str | None = None):
     dff = _enrich(year)
     fig = px.scatter(
         dff,
@@ -54,6 +101,21 @@ def _build_scatter(year: int):
             'Belastungsindex: %{customdata[2]:.2f}<extra></extra>'
         ),
     )
+    if canton:
+        traj = df_analysis_panel[df_analysis_panel['canton_label'] == canton].sort_values('year')
+        if not traj.empty:
+            icc = traj['canton_code'].iloc[0]
+            fig.add_trace(go.Scatter(
+                x=traj['cost_per_capita'],
+                y=traj['premium_median_monthly'],
+                mode='lines+markers',
+                line=dict(color='#555', width=1.5, dash='dot'),
+                marker=dict(size=5, color='#555', opacity=0.5),
+                customdata=traj[['year']].values,
+                name=f'{icc}: Verlauf {SQ2_YEARS[0]}–{SQ2_YEARS[-1]}',
+                hovertemplate='%{customdata[0]}: CHF %{x:,.0f} / CHF %{y:,.0f}/Mt.<extra></extra>',
+                showlegend=True,
+            ))
     fig.update_coloraxes(colorbar=dict(
         orientation='h', x=0.5, y=1.02, xanchor='center', yanchor='bottom',
         thickness=10, len=0.6, title_text='Prämien-Kosten-Gap', title_side='top',
@@ -63,53 +125,68 @@ def _build_scatter(year: int):
         margin=dict(l=60, t=50, b=40, r=8),
         paper_bgcolor='white', plot_bgcolor='white',
         font=dict(size=12, color='#888'),
+        legend=dict(orientation='h', x=0.01, y=0.99, xanchor='left', yanchor='top',
+                    bgcolor='rgba(255,255,255,0.7)', font_size=11),
     )
     return fig
 
 
-def _build_gap_bar(year: int):
+def _build_gap_bar(year: int, canton: str | None = None):
     dff = _enrich(year).sort_values('gap')
     canton_order = dff['canton_label'].tolist()
-    fig = px.bar(
-        dff,
-        x='gap',
-        y='canton_label',
-        orientation='h',
-        color='alignment',
-        color_discrete_map={
-            'Prämien über Kostenprofil': '#d8232a',
-            'Prämien unter Kostenprofil': '#2f4356',
-        },
-        category_orders={'canton_label': canton_order},
-        labels={
-            'gap': 'Prämienniveau − Kostenbelastung (z-Score)',
-            'canton_label': 'Kanton',
-            'alignment': '',
-        },
-        custom_data=['canton_label', 'cost_per_capita', 'premium_median_monthly'],
-    )
-    fig.update_traces(
-        hovertemplate=(
-            '<b>%{customdata[0]}</b><br>'
-            'Gap: %{x:.2f}<br>'
-            'Kosten pro Kopf: CHF %{customdata[1]:,.0f}<br>'
-            'Median-Prämie: CHF %{customdata[2]:,.0f}/Mt.<extra></extra>'
-        ),
-    )
+    fig = go.Figure()
+
+    def _color(alignment):
+        return '#d8232a' if alignment == 'Prämien über Kostenprofil' else '#2f4356'
+
+    if canton:
+        other = dff[dff['canton_label'] != canton]
+        sel = dff[dff['canton_label'] == canton]
+        fig.add_trace(go.Bar(
+            x=other['gap'], y=other['canton_label'],
+            orientation='h',
+            marker_color=[_color(a) for a in other['alignment']],
+            marker_opacity=0.2,
+            customdata=other[['canton_label', 'cost_per_capita', 'premium_median_monthly']].values,
+            hovertemplate='<b>%{customdata[0]}</b><br>Gap: %{x:.2f}<extra></extra>',
+            showlegend=False,
+        ))
+        if not sel.empty:
+            row = sel.iloc[0]
+            fig.add_trace(go.Bar(
+                x=sel['gap'], y=sel['canton_label'],
+                orientation='h',
+                marker_color=_color(row['alignment']),
+                customdata=sel[['canton_label', 'cost_per_capita', 'premium_median_monthly']].values,
+                hovertemplate='<b>%{customdata[0]}</b><br>Gap: %{x:.2f}<br>Kosten: CHF %{customdata[1]:,.0f}<br>Prämie: CHF %{customdata[2]:,.0f}/Mt.<extra></extra>',
+                showlegend=False,
+            ))
+    else:
+        fig.add_trace(go.Bar(
+            x=dff['gap'], y=dff['canton_label'],
+            orientation='h',
+            marker_color=[_color(a) for a in dff['alignment']],
+            customdata=dff[['canton_label', 'cost_per_capita', 'premium_median_monthly']].values,
+            hovertemplate='<b>%{customdata[0]}</b><br>Gap: %{x:.2f}<br>Kosten: CHF %{customdata[1]:,.0f}<br>Prämie: CHF %{customdata[2]:,.0f}/Mt.<extra></extra>',
+            showlegend=False,
+        ))
+
     fig.add_vline(x=0, line_color='#aaa', line_width=1)
     fig.update_layout(
         height=620,
         margin=dict(l=0, r=8, t=36, b=40),
         paper_bgcolor='white', plot_bgcolor='white',
         font=dict(size=11, color='#888'),
-        legend=dict(orientation='h', x=0, y=1.02, xanchor='left', yanchor='bottom', font_size=11),
-        yaxis=dict(automargin=True),
+        yaxis=dict(categoryorder='array', categoryarray=canton_order, automargin=True),
+        xaxis_title='Prämienniveau − Kostenbelastung (z-Score)',
+        barmode='overlay',
     )
     return fig
 
 
 _initial_scatter = _build_scatter(SQ2_YEARS[-1])
 _initial_gap_bar = _build_gap_bar(SQ2_YEARS[-1])
+_initial_kpis = _build_kpis(SQ2_YEARS[-1])
 
 tab = dcc.Tab(
     label="2. Prämien & Kosten", value="sq2", className="tab",
@@ -126,6 +203,9 @@ tab = dcc.Tab(
                 ),
             ], style={"marginBottom": "20px"}),
 
+            html.Div(id='sq2-kpis', children=_initial_kpis,
+                     style={"display": "flex", "gap": "12px", "marginBottom": "16px"}),
+
             html.Div([
                 html.Div([
                     html.Label("Jahr:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
@@ -133,6 +213,17 @@ tab = dcc.Tab(
                     html.Button("‹", id='sq2-year-prev', n_clicks=0, className='year-step-btn'),
                     html.Button("›", id='sq2-year-next', n_clicks=0, className='year-step-btn'),
                 ], style={"display": "flex", "alignItems": "center", "gap": "12px"}),
+                html.Div([
+                    html.Label("Kanton:", style={"fontWeight": "600", "whiteSpace": "nowrap", "fontSize": "13px", "color": "#555"}),
+                    dcc.Dropdown(
+                        id='sq2-canton-dropdown',
+                        options=[{"label": c, "value": c} for c in _CANTON_OPTIONS],
+                        value=None,
+                        clearable=True,
+                        placeholder="Alle Kantone",
+                        style={"flex": "1", "fontSize": "13px"},
+                    ),
+                ], style={"display": "flex", "alignItems": "center", "gap": "12px", "marginTop": "10px"}),
             ], style={
                 "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
                 "padding": "16px 20px", "marginBottom": "8px",
@@ -198,10 +289,31 @@ def sq2_step_year(_prev, _next, current_year):
 
 
 @callback(
+    Output('sq2-canton-dropdown', 'value'),
+    Input('sq2-scatter', 'clickData'),
+    Input('sq2-gap-bar', 'clickData'),
+    State('sq2-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq2_click_to_dropdown(scatter_click, bar_click, current_value):
+    from dash import ctx
+    clicked = None
+    if ctx.triggered_id == 'sq2-scatter' and scatter_click:
+        clicked = scatter_click['points'][0]['customdata'][0]
+    elif ctx.triggered_id == 'sq2-gap-bar' and bar_click:
+        clicked = bar_click['points'][0]['y']
+    if clicked is None:
+        return no_update
+    return None if clicked == current_value else clicked
+
+
+@callback(
     Output('sq2-scatter', 'figure'),
     Output('sq2-gap-bar', 'figure'),
+    Output('sq2-kpis', 'children'),
     Output('sq2-loading-anchor', 'children'),
     Input('sq2-year-slider', 'value'),
+    Input('sq2-canton-dropdown', 'value'),
 )
-def sq2_update(year):
-    return _build_scatter(year), _build_gap_bar(year), None
+def sq2_update(year, canton):
+    return _build_scatter(year, canton), _build_gap_bar(year, canton), _build_kpis(year, canton), None
