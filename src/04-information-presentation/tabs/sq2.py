@@ -43,13 +43,14 @@ def _build_kpis(year: int, canton: str | None = None) -> list:
         avg_premium = dff['premium_median_monthly'].mean()
         cost_delta = (row['cost_per_capita'] - avg_cost) / avg_cost * 100
         premium_delta = (row['premium_median_monthly'] - avg_premium) / avg_premium * 100
-        gap = row['gap']
-        direction = 'über' if gap > 0 else 'unter'
+        monthly_cost = row['cost_per_capita'] / 12
+        coverage = row['premium_median_monthly'] / monthly_cost * 100
+        avg_coverage = avg_premium / (avg_cost / 12) * 100
+        coverage_delta = coverage - avg_coverage
         return [
-            _kpi("Prämien-Kosten-Gap", f"{gap:+.2f}",
-                 f"Prämien {direction} Kostenprofil",
-                 note_color='#d8232a' if gap > 0 else '#2f4356'),
-            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']:,.0f}".replace(',', "'"),
+            _kpi("Prämie deckt Kosten zu", f"{coverage:.0f}%",
+                 f"{'+'if coverage_delta>=0 else ''}{coverage_delta:.1f}% gegenüber dem Schweizer Schnitt ({avg_coverage:.0f}%)"),
+            _kpi("Kosten pro Kopf", f"CHF {row['cost_per_capita']/12:,.0f}".replace(',', "'") + " / Monat",
                  f"{'+'if cost_delta>=0 else ''}{cost_delta:.1f}% gegenüber dem Schweizer Durchschnitt",
                  note_color='#c0392b' if cost_delta > 0 else '#27ae60'),
             _kpi("Median-Basisprämie", f"CHF {row['premium_median_monthly']:,.0f}".replace(',', "'") + " / Monat",
@@ -58,15 +59,22 @@ def _build_kpis(year: int, canton: str | None = None) -> list:
         ]
 
     r = dff['cost_per_capita'].corr(dff['premium_median_monthly'])
+    if r >= 0.75:
+        r_label = "Starke Übereinstimmung"
+    elif r >= 0.5:
+        r_label = "Moderate Übereinstimmung"
+    else:
+        r_label = "Schwache Übereinstimmung"
     outliers = int((dff['gap'].abs() > 1).sum())
     max_row = dff.loc[dff['gap'].abs().idxmax()]
     direction = 'über' if max_row['gap'] > 0 else 'unter'
     return [
-        _kpi("Korrelation Prämie ↔ Kosten", f"r = {r:.2f}", f"Pearson, alle Kantone {year}"),
-        _kpi("Auffällige Kantone", f"{outliers} von {len(dff)}", "|Gap| > 1 Standardabweichung"),
-        _kpi("Grösste Auffälligkeit", max_row['canton_code'],
-             f"Prämien {direction} Kostenprofil · Gap {max_row['gap']:+.2f}",
-             note_color='#d8232a' if max_row['gap'] > 0 else '#2f4356'),
+        _kpi("Prämien spiegeln Kosten wider", r_label,
+             f"Korrelation: r = {r:.2f} · alle Kantone {year}"),
+        _kpi("Kantone mit Ungleichgewicht", f"{outliers} von {len(dff)}",
+             "Prämien deutlich über oder unter Kostenprofil"),
+        _kpi("Grösste Auffälligkeit", max_row['canton_label'],
+             f"Prämien {direction} Kostenprofil"),
     ]
 
 
@@ -116,9 +124,25 @@ def _build_scatter(year: int, canton: str | None = None):
                 hovertemplate='%{customdata[0]}: CHF %{x:,.0f} / CHF %{y:,.0f}/Mt.<extra></extra>',
                 showlegend=True,
             ))
+    # diagonal reference line: expected premium ∝ cost (fitted OLS)
+    x_vals = dff['cost_per_capita']
+    y_vals = dff['premium_median_monthly']
+    m, b = np.polyfit(x_vals, y_vals, 1)
+    x_range = [x_vals.min(), x_vals.max()]
+    y_range = [m * x + b for x in x_range]
+    fig.add_trace(go.Scatter(
+        x=x_range, y=y_range,
+        mode='lines',
+        line=dict(color='#aaa', width=1.5, dash='dot'),
+        name='Erwartetes Prämienniveau',
+        hoverinfo='skip',
+        showlegend=True,
+    ))
     fig.update_coloraxes(colorbar=dict(
         orientation='h', x=0.5, y=1.02, xanchor='center', yanchor='bottom',
-        thickness=10, len=0.6, title_text='Prämien-Kosten-Gap', title_side='top',
+        thickness=10, len=0.6,
+        title_text='Prämien relativ zu Kosten (rot = zu hoch, blau = zu tief)',
+        title_side='top',
     ))
     fig.update_layout(
         height=520,
@@ -178,7 +202,7 @@ def _build_gap_bar(year: int, canton: str | None = None):
         paper_bgcolor='white', plot_bgcolor='white',
         font=dict(size=11, color='#888'),
         yaxis=dict(categoryorder='array', categoryarray=canton_order, automargin=True),
-        xaxis_title='Prämienniveau − Kostenbelastung (z-Score)',
+        xaxis_title='← Prämien zu tief   |   Prämien zu hoch →',
         barmode='overlay',
     )
     return fig
@@ -187,7 +211,6 @@ def _build_gap_bar(year: int, canton: str | None = None):
 _initial_scatter = _build_scatter(SQ2_YEARS[-1])
 _initial_gap_bar = _build_gap_bar(SQ2_YEARS[-1])
 _initial_kpis = _build_kpis(SQ2_YEARS[-1])
-
 tab = dcc.Tab(
     label="2. Prämienbelastung", value="sq2", className="tab",
     style=TAB_STYLE, selected_style=TAB_SELECTED,
@@ -240,7 +263,7 @@ tab = dcc.Tab(
                         "fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px",
                     }),
                     html.Div(
-                        "Grösse = Belastungsindex · Farbe = Prämien-Kosten-Gap",
+                        "Kantone weit von der gestrichelten Linie haben ein Ungleichgewicht · Rot = Prämien zu hoch · Blau = Prämien zu tief",
                         style={"fontSize": "11px", "color": "#aaa", "marginBottom": "8px"},
                     ),
                     dcc.Graph(id='sq2-scatter', figure=_initial_scatter, config={"displayModeBar": False}),
