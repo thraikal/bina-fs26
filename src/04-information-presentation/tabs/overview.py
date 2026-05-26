@@ -11,7 +11,9 @@ _panel_latest['share_pct_66'] = _panel_latest['population_share_66_plus'] * 100
 
 _avg_cost = _panel_latest['cost_per_capita'].mean()
 _avg_age_share = _panel_latest['population_share_66_plus'].mean()
-_priority_count = int((df_manager_priorities['priority_flag'] == 'Prioritär beobachten').sum())
+_z = lambda s: (s - s.mean()) / s.std(ddof=0)
+_panel_latest['_gap'] = _z(_panel_latest['premium_median_monthly']) - _z(_panel_latest['cost_per_capita'])
+_sq2_above = int((_panel_latest['_gap'] > 0).sum())
 
 
 def _kpi_card(label, value, sub, accent, card_id=None):
@@ -124,7 +126,7 @@ tab = dcc.Tab(
                     "fontSize": "18px", "fontWeight": "700", "color": "#2f4356",
                 }),
                 html.Div(
-                    f"Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz, Analysefenster {_baseline_year}–{_latest_year}",
+                    f"Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz, Analysefenster {_baseline_year}-{_latest_year}",
                     style={"fontSize": "12px", "color": "#888", "marginTop": "4px"},
                 ),
             ], style={"marginBottom": "20px"}),
@@ -135,8 +137,15 @@ tab = dcc.Tab(
                     "Ø Gesundheitskosten pro Kopf",
                     f"CHF {_avg_cost:,.0f}",
                     f"Durchschnitt aller Kantone {_latest_year}",
-                    "#d8232a",
+                    "#2f4356",
                     card_id="kpi-cost",
+                ),
+                _kpi_card(
+                    "Prämien übersteigen Kosten",
+                    f"{_sq2_above} von {len(_panel_latest)} Kantonen",
+                    f"Stand {_latest_year}",
+                    "#2f4356",
+                    card_id="kpi-premium",
                 ),
                 _kpi_card(
                     "Ø Bevölkerungsanteil 66+",
@@ -144,13 +153,6 @@ tab = dcc.Tab(
                     f"Durchschnitt aller Kantone {_latest_year}",
                     "#2f4356",
                     card_id="kpi-age",
-                ),
-                _kpi_card(
-                    "Prioritär zu beobachtende Kantone",
-                    str(_priority_count),
-                    "Hohe Belastung oder starker Anstieg bis 2030",
-                    "#d8232a",
-                    card_id="kpi-priority",
                 ),
             ], style={"display": "flex", "gap": "16px", "marginBottom": "16px"}),
 
