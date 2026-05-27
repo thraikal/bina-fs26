@@ -315,9 +315,9 @@ def sq3_detail_chart(canton):
     base_year = int(df_aging['year'].min())
     if canton:
         icc = df_aging.loc[df_aging['canton'] == canton, 'icc'].iloc[0]
-        title = f"Relativer Anstieg seit {base_year}: {canton} ({icc}) im Vergleich zur Schweiz"
+        title = f"Relativer Anstieg seit {base_year}: {canton} ({icc}) im Vergleich zur Schweiz (CH)"
     else:
-        title = f"Relativer Anstieg seit {base_year}: Schweiz"
+        title = f"Relativer Anstieg seit {base_year}: Schweiz (CH)"
     return [
         html.Div([
             html.H3(title, style={"margin": "0 0 2px", "fontSize": "13px", "color": "#555"}),
