@@ -41,5 +41,7 @@ python src/04-information-presentation/app.py
 
 ## Datenquellen
 
-- [Gesundheitskosten (bfs.admin.ch)](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS)
-- [Bevölkerungsdaten (bfs.admin.ch)](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html)
+- [Gesundheitskosten (bfs.admin.ch)](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS): Kosten des Gesundheitswesens nach Kanton und Altersgruppe, 2011–2026, bezogen über die SDMX-API
+- [Bevölkerungsdaten (bfs.admin.ch)](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html): Ständige Wohnbevölkerung nach Kanton, Alter und Jahr, 2011–2026, bezogen über die PxWeb-API
+- [KVG-Prämiendaten (opendata.swiss)](https://opendata.swiss/de/dataset/health-insurance-premiums): Krankenkassenprämien nach Kanton, Modell und Franchise, 2011–2026, bezogen über die CKAN-API
+- [SwissBOUNDARIES3D (swisstopo.admin.ch)](https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d): Kantonsgeometrien für die Kartendarstellung im Dashboard
