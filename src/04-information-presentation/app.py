@@ -6,7 +6,7 @@ HERE = Path(__file__).parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(HERE))
 
-from dash import Dash, html, dcc, Input, Output, ctx
+from dash import Dash, html, dcc, Input, Output, ctx, no_update
 
 import tabs.overview as overview
 import tabs.sq1 as sq1
@@ -97,6 +97,7 @@ app.layout = [
 
 @app.callback(
     Output("tabs", "value"),
+    Output("sq4-canton-dropdown", "value", allow_duplicate=True),
     Input("factor-cost",    "n_clicks"),
     Input("factor-age",     "n_clicks"),
     Input("factor-premium", "n_clicks"),
@@ -104,14 +105,26 @@ app.layout = [
     Input("link-age",       "n_clicks"),
     Input("link-premium",   "n_clicks"),
     Input("overview-priority-table", "n_clicks"),
+    Input("overview-map",   "clickData"),
     prevent_initial_call=True,
 )
 def _navigate_from_overview(*_):
-    return {
+    if ctx.triggered_id == "overview-map":
+        click_data = ctx.triggered[0]["value"]
+        if click_data:
+            pts = click_data.get("points", [])
+            if pts:
+                canton = pts[0].get("location")
+                if canton:
+                    return "sq4", canton
+        return no_update, no_update
+
+    tab = {
         "factor-cost": "sq1", "factor-age": "sq3", "factor-premium": "sq2",
         "link-cost":   "sq1", "link-age":   "sq3", "link-premium":   "sq2",
         "overview-priority-table": "sq4",
     }.get(ctx.triggered_id, "overview")
+    return tab, no_update
 
 
 if __name__ == '__main__':

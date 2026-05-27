@@ -166,7 +166,12 @@ tab = dcc.Tab(
                         style={"fontSize": "13px", "fontWeight": "700", "color": "#2f4356"},
                     ),
                     html.Div(
-                        dcc.Graph(figure=_build_belastung_map(), config={"displayModeBar": False},
+                        "Kanton anklicken für Detailansicht",
+                        style={"fontSize": "11px", "color": "#aaa", "marginTop": "2px", "marginBottom": "8px"},
+                    ),
+                    html.Div(
+                        dcc.Graph(id='overview-map', figure=_build_belastung_map(),
+                                  config={"displayModeBar": False},
                                   responsive=True, style={"height": "100%"}),
                         style={"width": "100%", "aspectRatio": "1.6 / 1"},
                     ),
