@@ -128,4 +128,4 @@ def _navigate_from_overview(*_):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
