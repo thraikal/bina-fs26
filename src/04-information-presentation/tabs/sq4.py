@@ -209,7 +209,6 @@ def _build_projection_chart(canton: str | None = None):
                 orientation='h',
                 marker_color=[_bar_color(f) for f in other['priority_flag']],
                 marker_opacity=0.18,
-                name='Belastungsindex 2030',
                 showlegend=False,
                 customdata=np.stack([
                     other['belastungsindex_latest'],
@@ -235,8 +234,7 @@ def _build_projection_chart(canton: str | None = None):
                 y=sel['canton_label'],
                 orientation='h',
                 marker_color=_bar_color(row['priority_flag']),
-                name='Belastungsindex 2030',
-                showlegend=True,
+                showlegend=False,
                 customdata=np.stack([
                     sel['belastungsindex_latest'],
                     sel['delta_belastungsindex_to_2030'],
@@ -259,7 +257,7 @@ def _build_projection_chart(canton: str | None = None):
             y=dff['canton_label'],
             orientation='h',
             marker_color=[_bar_color(f) for f in dff['priority_flag']],
-            name='Belastungsindex 2030',
+            showlegend=False,
             customdata=np.stack([
                 dff['belastungsindex_latest'],
                 dff['delta_belastungsindex_to_2030'],
@@ -290,6 +288,17 @@ def _build_projection_chart(canton: str | None = None):
         name=f'Aktuell ({_latest_year})',
         hoverinfo='skip',
     ))
+
+    # Legend keys for bar color encoding (priority flag)
+    for _label, _color in [('Prognose (prioritär beobachten)', '#d8232a'), ('Prognose (regulär beobachten)', '#acb4bd')]:
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None],
+            mode='markers',
+            marker=dict(symbol='square', size=10, color=_color),
+            name=_label,
+            showlegend=True,
+            hoverinfo='skip',
+        ))
 
     fig.update_layout(
         height=620,
@@ -358,7 +367,7 @@ tab = dcc.Tab(
                         "fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px",
                     }),
                     html.Div(
-                        f"Kantone mit ähnlichem Kosten- und Altersprofil bilden ein Segment"
+                        f"Kantone mit ähnlichem Kosten-, Prämien- und Altersprofil"
                         f" · Kreisgrösse = Median-Prämie",
                         style={"fontSize": "11px", "color": "#aaa", "marginBottom": "8px"},
                     ),
@@ -374,7 +383,7 @@ tab = dcc.Tab(
                         "fontSize": "13px", "fontWeight": "600", "color": "#555", "marginBottom": "4px",
                     }),
                     html.Div(
-                        "Balken = Prognose 2030 · Punkt = aktueller Wert · Rot = prioritär beobachten",
+                        "Balken = Prognose 2030 · Punkt = aktueller Wert",
                         style={"fontSize": "11px", "color": "#aaa", "marginBottom": "8px"},
                     ),
                     dcc.Graph(id='sq4-projection', figure=_fig_projection, config={"displayModeBar": False}),
@@ -441,7 +450,7 @@ def sq4_update_kpis(canton):
     delta_color = '#c0392b' if delta > 0 else '#27ae60' if delta < 0 else '#666'
 
     return [
-        _kpi("Priorität beobachtet", prio_value, prio_note, note_color=prio_color),
+        _kpi("Priorität beobachten", prio_value, prio_note, note_color=prio_color),
         _kpi("Segment", segment, f"von {_CHOSEN_K} Segmenten", note_color=seg_color),
         _kpi("Entwicklung bis 2030", delta_str, delta_note, note_color=delta_color),
     ]
