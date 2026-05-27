@@ -2,7 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from dash import dcc, html, callback, Output, Input, State, no_update
+from dash import dcc, html, callback, Output, Input, State, no_update, ctx
 
 from data import df_analysis_panel, df_manager_priorities
 from styles import BORDER, CARD_BG, TAB_STYLE, TAB_SELECTED
@@ -326,6 +326,7 @@ tab = dcc.Tab(
             # KPI row
             html.Div(
                 _INITIAL_KPIS,
+                id='sq4-kpi-row',
                 style={"display": "flex", "gap": "12px", "marginBottom": "16px"},
             ),
 
@@ -410,6 +411,43 @@ def sq4_reset_click_data(dropdown_value):
 
 
 @callback(
+    Output('sq4-kpi-row', 'children'),
+    Input('sq4-canton-dropdown', 'value'),
+)
+def sq4_update_kpis(canton):
+    if not canton:
+        return _INITIAL_KPIS
+
+    # --- Priority flag ---
+    mp_row = df_manager_priorities[df_manager_priorities['canton_label'] == canton]
+    if mp_row.empty:
+        return _INITIAL_KPIS
+    mp = mp_row.iloc[0]
+
+    is_priority = mp['priority_flag'] == 'Prioritär beobachten'
+    prio_value = "Ja" if is_priority else "Nein"
+    prio_note = "Erwarteter Handlungsbedarf bis 2030" if is_priority else "Kein Handlungsbedarf erwartet"
+    prio_color = '#c0392b' if is_priority else '#27ae60'
+
+    # --- Segment ---
+    cl_row = _cluster_df[_cluster_df['canton_label'] == canton]
+    segment = cl_row.iloc[0]['cluster_name'] if not cl_row.empty else '–'
+    seg_color = _CLUSTER_COLORS.get(segment, '#666')
+
+    # --- Development to 2030 ---
+    delta = mp['delta_belastungsindex_to_2030']
+    delta_str = f"{delta:+.2f} Punkte"
+    delta_note = "Anstieg erwartet" if delta > 0 else "Rückgang erwartet" if delta < 0 else "Keine Veränderung"
+    delta_color = '#c0392b' if delta > 0 else '#27ae60' if delta < 0 else '#666'
+
+    return [
+        _kpi("Priorität beobachtet", prio_value, prio_note, note_color=prio_color),
+        _kpi("Segment", segment, f"von {_CHOSEN_K} Segmenten", note_color=seg_color),
+        _kpi("Entwicklung bis 2030", delta_str, delta_note, note_color=delta_color),
+    ]
+
+
+@callback(
     Output('sq4-canton-dropdown', 'value'),
     Input('sq4-scatter', 'clickData'),
     Input('sq4-projection', 'clickData'),
@@ -417,7 +455,6 @@ def sq4_reset_click_data(dropdown_value):
     prevent_initial_call=True,
 )
 def sq4_click_to_dropdown(scatter_click, proj_click, current_value):
-    from dash import ctx
     clicked = None
     if ctx.triggered_id == 'sq4-scatter' and scatter_click:
         pts = scatter_click.get('points', [])
