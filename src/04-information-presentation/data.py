@@ -1,10 +1,7 @@
-import io
 import sys
 from pathlib import Path
 
 import pandas as pd
-import requests
-import certifi
 
 ROOT = Path(__file__).parents[2]
 sys.path.insert(0, str(ROOT / "src"))
@@ -12,13 +9,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from utils.fetch_cantons import load_cantons_geojson
 
 cantons = load_cantons_geojson(ROOT / "data/dashboard")
-
-_response = requests.get(
-    "https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv",
-    timeout=60, verify=certifi.where(),
-)
-_response.raise_for_status()
-df_gapminder = pd.read_csv(io.StringIO(_response.text))
 
 _df_costs_raw = pd.read_csv(ROOT / "data/processed/gesundheitskosten.csv")
 _df_pop_raw = pd.read_csv(ROOT / "data/processed/bevoelkerung.csv")
