@@ -156,7 +156,6 @@ def _build_cluster_scatter(canton: str | None = None):
                     size=[row['premium_median_monthly'] / 34],
                     color=_CLUSTER_COLORS[cname],
                     opacity=1.0,
-                    line=dict(width=2.5, color='#2f4356'),
                 ),
                 name=canton,
                 legendgroup=cname,
@@ -236,7 +235,6 @@ def _build_projection_chart(canton: str | None = None):
                 y=sel['canton_label'],
                 orientation='h',
                 marker_color=_bar_color(row['priority_flag']),
-                marker_line=dict(width=2, color='#2f4356'),
                 name='Belastungsindex 2030',
                 showlegend=True,
                 customdata=np.stack([
@@ -397,6 +395,18 @@ tab = dcc.Tab(
 )
 def sq4_update(canton):
     return _build_cluster_scatter(canton), _build_projection_chart(canton)
+
+
+@callback(
+    Output('sq4-scatter', 'clickData'),
+    Output('sq4-projection', 'clickData'),
+    Input('sq4-canton-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def sq4_reset_click_data(dropdown_value):
+    if dropdown_value is None:
+        return None, None
+    return no_update, no_update
 
 
 @callback(
