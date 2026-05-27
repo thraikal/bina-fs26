@@ -14,14 +14,16 @@ Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Ma
 
 ## Setup
 
-1. Create a virtual environment
+Python-Installation wird vorausgesetzt.
+
+1. Virtuelle Umgebung erstellen
 
 ```bash
 python -m venv <name-of-venv>
 source venv/bin/activate
 ```
 
-2. Install dependencies
+2. Dependencies installieren
 
 ```bash
 pip install -r requirements.txt
@@ -29,15 +31,15 @@ pip install -r requirements.txt
 
 ## Dashboard starten
 
-1. Run:
+1. Befehl ausführen
 
 ```bash
 python src/04-information-presentation/app.py
 ```
 
-2. Open `http://127.0.0.1:8050/` in your browser.
+2. `http://127.0.0.1:8050/` im Browser öffnen
 
-## Sources
+## Datenquellen
 
 - [Gesundheitskosten (bfs.admin.ch)](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS)
 - [Bevölkerungsdaten (bfs.admin.ch)](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html)
