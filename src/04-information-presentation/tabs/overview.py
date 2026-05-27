@@ -16,9 +16,10 @@ _avg_age_share = _panel_latest['population_share_66_plus'].mean()
 
 def _kpi_card(card_id, value, label):
     return html.Div([
+        html.Div(label, style={"fontSize": "11px", "color": "#888", "textTransform": "uppercase",
+                               "letterSpacing": "0.05em", "marginBottom": "4px"}),
         html.Div(value, style={"fontSize": "22px", "fontWeight": "700", "color": "#2f4356"}),
-        html.Div(label, style={"fontSize": "12px", "color": "#444", "marginTop": "4px", "fontWeight": "600"}),
-        html.Div("Detail ansehen →", className="kpi-hint", style={"fontSize": "10px", "color": "#d8232a", "marginTop": "8px", "fontWeight": "600"}),
+        html.Div("Detail ansehen →", className="kpi-hint", style={"fontSize": "10px", "color": "#d8232a", "marginTop": "2px", "fontWeight": "600"}),
     ], id=card_id, n_clicks=0, className="kpi-card-link", style={
         "background": CARD_BG, "border": BORDER, "borderRadius": "8px",
         "padding": "16px 20px", "flex": "1", "cursor": "pointer",
