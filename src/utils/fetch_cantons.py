@@ -4,10 +4,6 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-import geopandas as gpd
-import requests
-import certifi
-
 # URL copied from https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d
 URL = "https://data.geo.admin.ch/ch.swisstopo.swissboundaries3d/swissboundaries3d_2026-01/swissboundaries3d_2026-01_2056_5728.gpkg.zip"
 LAYER = "tlm_kantonsgebiet"
@@ -23,6 +19,7 @@ def load_cantons_geojson(data_dir: Path) -> dict:
 
 
 def _download_zip() -> bytes:
+    import requests, certifi
     print("Downloading swissBOUNDARIES3D...")
     response = requests.get(URL, timeout=60, verify=certifi.where())
     response.raise_for_status()
@@ -36,6 +33,7 @@ def _unzip_gpkg(zip_bytes: bytes) -> bytes:
 
 
 def _convert_to_geojson(gpkg_bytes: bytes, dest: Path) -> None:
+    import geopandas as gpd
     with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as tmp:
         tmp.write(gpkg_bytes)
         tmp_path = tmp.name
