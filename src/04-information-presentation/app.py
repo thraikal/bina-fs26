@@ -127,5 +127,7 @@ def _navigate_from_overview(*_):
     return tab, no_update
 
 
+server = app.server
+
 if __name__ == '__main__':
     app.run(debug=False)

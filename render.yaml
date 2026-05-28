@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: bina-fs26
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir src/04-information-presentation app:server
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.3

@@ -5,5 +5,4 @@ venv/*
 dataflow*
 data/raw
 data/interim
-data/dashboard
-data/processed
+# data/dashboard and data/processed are included for deployment
