@@ -1,34 +1,47 @@
-# Bina: Gruppenarbeit
+# BINA Case Study: Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz
 
-## Fragen
+## Einleitung
+Diese Anwendung zeigt die Entwicklung der Gesundheitskosten in der Schweiz über die Zeit und analysiert die Auswirkungen auf die Alterung und Prämienbelastung.
 
-Inwieweit lassen sich Gesundheitskosten in der Schweiz durch demografische (insbesondere Altersstruktur) und regionale Faktoren erklären und welche Segmente verursachen die grösste Systembelastung?
-
-1. Wie entwickeln sich die Gesundheitskosten über die Zeit?
-2. Wie unterscheiden sich Kosten nach Alter und Region?
-3. Welchen Anteil haben ältere Altersgruppen (65+) an den Gesamtkosten und wie verändert sich dieser über die Zeit?
-4. Lassen sich auf Basis von Altersstruktur und Kosten klare Segmente (Cluster) identifizieren?
-5. Welche Faktoren erklären die Unterschiede zwischen diesen Segmenten und welche sollten priorisiert werden?
+## Fragestellung
+Welche Kantone stehen aufgrund von Gesundheitskosten, Alterung und Prämienbelastung unter dem grössten Druck, und welche Entwicklung ist bis 2030 zu erwarten?
+1. Welche Kantone haben die höchsten Gesundheitskosten pro Kopf, und wie hat sich dieser Druck seit 2011 entwickelt?
+2. In welchen Kantonen passen Prämienniveau und Gesundheitskostenbelastung zusammen und wo gibt es Auffälligkeiten?
+3. Wie stark hängt die kantonale Kostenbelastung mit dem Anteil älterer Bevölkerung zusammen?
+4. Welche Kantone bilden ähnliche Belastungssegmente, und wie entwickeln sich diese bis 2030?
 
 Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Massnahmen im Gesundheitssystem abzuleiten.
 
 ## Setup
 
-1. Create a virtual environment
+Python-Installation wird vorausgesetzt.
+
+1. Virtuelle Umgebung erstellen
 
 ```bash
 python -m venv <name-of-venv>
 source venv/bin/activate
 ```
 
-2. Install dependencies
+2. Dependencies installieren
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Sources
+## Dashboard starten
 
-[Gesundheitskosten](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS)
+1. Befehl ausführen
 
-[Bevölkerungsdaten](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html)
+```bash
+python src/04-information-presentation/app.py
+```
+
+2. `http://127.0.0.1:8050/` im Browser öffnen
+
+## Datenquellen
+
+- [Gesundheitskosten (bfs.admin.ch)](https://www.bfs.admin.ch/asset/de/DF_COU_HEALTH_COSTS): Kosten des Gesundheitswesens nach Kanton und Altersgruppe, 2011–2026, bezogen über die SDMX-API
+- [Bevölkerungsdaten (bfs.admin.ch)](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung.assetdetail.36074768.html): Ständige Wohnbevölkerung nach Kanton, Alter und Jahr, 2011–2026, bezogen über die PxWeb-API
+- [KVG-Prämiendaten (opendata.swiss)](https://opendata.swiss/de/dataset/health-insurance-premiums): Krankenkassenprämien nach Kanton, Modell und Franchise, 2011–2026, bezogen über die CKAN-API
+- [SwissBOUNDARIES3D (swisstopo.admin.ch)](https://www.swisstopo.admin.ch/en/landscape-model-swissboundaries3d): Kantonsgeometrien für die Kartendarstellung im Dashboard
