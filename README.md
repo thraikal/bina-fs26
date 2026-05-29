@@ -12,6 +12,10 @@ Welche Kantone stehen aufgrund von Gesundheitskosten, Alterung und Prämienbelas
 
 Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Massnahmen im Gesundheitssystem abzuleiten.
 
+## Hinweis zu den Notebooks
+
+Die Plots in den Notebooks werden als statische Bilder ausgegeben, damit diese auch in GitHub angezeigt werden. Für interaktive Charts muss `pio.renderers.default`- zu `"notebook+png"` geändert werden.
+
 ## Setup
 
 Python-Installation wird vorausgesetzt.
