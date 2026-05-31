@@ -1,5 +1,14 @@
 # BINA Case Study: Gesundheitskosten, Alterung & Prämienbelastung in der Schweiz
 
+## Video
+
+[Vorstellung der Case Study als Video](https://1drv.ms/v/c/dd4fb1954e15d6c7/IQAxFjGSlq4bRZYR8RAzVSB8AX_kYDl9b9M4NRmYwLfZYuM?e=P8ywgA)
+
+## ⚠️ Jupyter Notebooks in GitHub
+
+GitHub hat aktuell einen [Fehler beim Rendern von Jupyter Notebooks](https://github.com/orgs/community/discussions/197350). Die Notebooks können alternativ im FFHS-GitLab angeschaut werden:
+- https://git.ffhs.ch/marc.kalbermatter/bina-fs26
+
 ## Einleitung
 Diese Anwendung zeigt die Entwicklung der Gesundheitskosten in der Schweiz über die Zeit und analysiert die Auswirkungen auf die Alterung und Prämienbelastung.
 
@@ -12,9 +21,9 @@ Welche Kantone stehen aufgrund von Gesundheitskosten, Alterung und Prämienbelas
 
 Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Massnahmen im Gesundheitssystem abzuleiten.
 
-## Hinweis zu den Notebooks
+## Plots in Jupyter Notebooks
 
-Die Plots in den Notebooks werden als statische Bilder ausgegeben, damit diese auch in GitHub angezeigt werden. Für interaktive Charts muss `pio.renderers.default`- zu `"notebook+png"` geändert werden.
+Die Plots in den Jupyter Notebooks werden als statische Bilder ausgegeben, damit diese auch in GitHub angezeigt werden. Für interaktive Charts muss `pio.renderers.default`- zu `"notebook+png"` geändert werden.
 
 ## Setup
 
