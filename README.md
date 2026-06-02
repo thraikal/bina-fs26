@@ -4,10 +4,6 @@
 
 [Vorstellung der Case Study als Video](https://1drv.ms/v/c/dd4fb1954e15d6c7/IQAxFjGSlq4bRZYR8RAzVSB8AX_kYDl9b9M4NRmYwLfZYuM?e=P8ywgA)
 
-## ⚠️ Jupyter Notebooks in GitHub
-
-GitHub hat aktuell einen [Fehler beim Rendern von Jupyter Notebooks](https://github.com/orgs/community/discussions/197350). Die Notebooks können alternativ im FFHS-GitLab angeschaut werden:
-- https://git.ffhs.ch/marc.kalbermatter/bina-fs26
 
 ## Einleitung
 Diese Anwendung zeigt die Entwicklung der Gesundheitskosten in der Schweiz über die Zeit und analysiert die Auswirkungen auf die Alterung und Prämienbelastung.
@@ -24,6 +20,11 @@ Ziel ist es, datenbasierte Entscheidungsgrundlagen für die Priorisierung von Ma
 ## Plots in Jupyter Notebooks
 
 Die Plots in den Jupyter Notebooks werden als statische Bilder ausgegeben, damit diese auch in GitHub angezeigt werden. Für interaktive Charts muss `pio.renderers.default`- zu `"notebook+png"` geändert werden.
+
+## Jupyter Notebooks in GitHub
+
+Vom 30.05. bis 01.06. konnten Jupyter Notebooks bei GitHub nicht gerendert werden. Die Notebooks können daher alternativ im FFHS-GitLab angeschaut werden:
+- https://git.ffhs.ch/marc.kalbermatter/bina-fs26
 
 ## Setup
 
